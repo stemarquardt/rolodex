@@ -1,0 +1,66 @@
+package templates
+
+import (
+	"fmt"
+
+	"rolodex/internal/model"
+)
+
+templ PeopleList(people []model.Person, search string) {
+	@Layout("people", "Personal CRM", "People", fmt.Sprintf("%d people, remembered in your own words.", len(people))) {
+		<form class="inline-form" method="get" action="/people">
+			<input type="text" name="q" placeholder="Search names, circles, or notes" value={ search }/>
+			<button class="btn" type="submit">Search</button>
+		</form>
+		<form class="inline-form" hx-post="/people" hx-target="#people-table" hx-swap="outerHTML">
+			<input type="text" name="first_name" placeholder="First name" required/>
+			<input type="text" name="last_name" placeholder="Last name"/>
+			<input type="text" name="location" placeholder="Location"/>
+			<button class="btn btn-primary" type="submit">+ Add person</button>
+		</form>
+		@PeopleTable(people)
+	}
+}
+
+templ PeopleTable(people []model.Person) {
+	<div class="panel" id="people-table">
+		<table>
+			<thead>
+				<tr>
+					<th>Person</th>
+					<th>Circles</th>
+					<th>Last contact</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, p := range people {
+					<tr>
+						<td>
+							<div style="display:flex;align-items:center;gap:10px;">
+								<div class="avatar">{ initials(p) }</div>
+								<a href={ templ.URL(personURL(p.ID)) }>{ p.FullName() }</a>
+							</div>
+						</td>
+						<td>
+							for _, c := range p.Circles {
+								<span class="tag">{ c }</span>
+							}
+						</td>
+						<td class="muted">
+							if p.LastContact != "" {
+								{ p.LastContact }
+							} else {
+								—
+							}
+						</td>
+					</tr>
+				}
+				if len(people) == 0 {
+					<tr>
+						<td colspan="3" class="muted">No people yet — add your first person above.</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+}

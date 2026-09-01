@@ -1,0 +1,105 @@
+package templates
+
+import (
+	"rolodex/internal/model"
+)
+
+templ PersonDetail(detail *model.PersonDetail) {
+	@Layout("people", "People / Profile", detail.FullName(), detail.Location) {
+		<div class="panel">
+			<div class="section-title">Contact information</div>
+			if len(detail.ContactInfo) == 0 {
+				<div class="muted">No contact info yet.</div>
+			}
+			for _, c := range detail.ContactInfo {
+				<div class="list-row">
+					<span class="muted" style="width:120px;text-transform:uppercase;font-size:11px;">{ c.Type }</span>
+					<span>{ c.Value }</span>
+				</div>
+			}
+		</div>
+
+		<div class="panel">
+			<div class="section-title">Important dates</div>
+			if len(detail.ImportantDates) == 0 {
+				<div class="muted">No important dates yet.</div>
+			}
+			for _, d := range detail.ImportantDates {
+				<div class="list-row">
+					<span class="tag">{ d.Label }</span>
+					<span class="muted">{ formatImportantDate(d) }</span>
+				</div>
+			}
+		</div>
+
+		<div class="panel">
+			<div class="section-title">Relationships</div>
+			if len(detail.Relationships) == 0 {
+				<div class="muted">No relationships recorded yet.</div>
+			}
+			for _, r := range detail.Relationships {
+				<div class="list-row">
+					<span class="tag">{ r.TypeName }</span>
+					<a href={ templ.URL(personURL(r.RelatedPersonID)) }>{ r.RelatedName }</a>
+				</div>
+			}
+		</div>
+
+		<div class="panel">
+			<div class="section-title">Circles</div>
+			if len(detail.CircleMemberships) == 0 {
+				<div class="muted">Not part of any circles yet.</div>
+			}
+			for _, m := range detail.CircleMemberships {
+				<div class="list-row">
+					<span class="tag">{ m.CircleName }</span>
+					if m.Note.Valid && m.Note.String != "" {
+						<span class="muted">{ m.Note.String }</span>
+					}
+				</div>
+			}
+		</div>
+
+		<div class="panel">
+			<div class="section-title">Pets</div>
+			if len(detail.Pets) == 0 {
+				<div class="muted">No pets recorded.</div>
+			}
+			for _, p := range detail.Pets {
+				<div class="list-row">
+					<span>{ p.Name }</span>
+					<span class="muted">{ p.Species }</span>
+					if p.Notes != "" {
+						<span class="tag">{ p.Notes }</span>
+					}
+				</div>
+			}
+		</div>
+
+		<div class="panel">
+			<div class="section-title">Quick facts</div>
+			if len(detail.Facts) == 0 {
+				<div class="muted">No quick facts yet.</div>
+			}
+			for _, f := range detail.Facts {
+				<div class="list-row">
+					<span class="muted" style="width:160px;text-transform:uppercase;font-size:11px;">{ f.Label }</span>
+					<span>{ f.Value }</span>
+				</div>
+			}
+		</div>
+
+		<div class="panel">
+			<div class="section-title">Notes</div>
+			if len(detail.Notes) == 0 {
+				<div class="muted">No notes logged yet.</div>
+			}
+			for _, n := range detail.Notes {
+				<div class="list-row">
+					<span class="muted" style="width:160px;">{ n.CreatedAt }</span>
+					<span>{ n.Body }</span>
+				</div>
+			}
+		</div>
+	}
+}
