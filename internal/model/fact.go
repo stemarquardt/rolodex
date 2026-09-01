@@ -30,3 +30,20 @@ func (s *Store) ListFacts(ctx context.Context, personID int64) ([]Fact, error) {
 	}
 	return items, rows.Err()
 }
+
+func (s *Store) CreateFact(ctx context.Context, personID int64, label, value string) (int64, error) {
+	res, err := s.db.ExecContext(ctx, `
+		INSERT INTO facts (person_id, label, value) VALUES (?, ?, ?)
+	`, personID, label, value)
+	if err != nil {
+		return 0, fmt.Errorf("create fact: %w", err)
+	}
+	return res.LastInsertId()
+}
+
+func (s *Store) DeleteFact(ctx context.Context, id int64) error {
+	if _, err := s.db.ExecContext(ctx, `DELETE FROM facts WHERE id = ?`, id); err != nil {
+		return fmt.Errorf("delete fact: %w", err)
+	}
+	return nil
+}

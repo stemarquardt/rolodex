@@ -31,3 +31,20 @@ func (s *Store) ListPets(ctx context.Context, personID int64) ([]Pet, error) {
 	}
 	return items, rows.Err()
 }
+
+func (s *Store) CreatePet(ctx context.Context, personID int64, name, species, notes string) (int64, error) {
+	res, err := s.db.ExecContext(ctx, `
+		INSERT INTO pets (person_id, name, species, notes) VALUES (?, ?, ?, ?)
+	`, personID, name, species, notes)
+	if err != nil {
+		return 0, fmt.Errorf("create pet: %w", err)
+	}
+	return res.LastInsertId()
+}
+
+func (s *Store) DeletePet(ctx context.Context, id int64) error {
+	if _, err := s.db.ExecContext(ctx, `DELETE FROM pets WHERE id = ?`, id); err != nil {
+		return fmt.Errorf("delete pet: %w", err)
+	}
+	return nil
+}

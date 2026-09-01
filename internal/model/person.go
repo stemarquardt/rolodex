@@ -116,9 +116,44 @@ func (s *Store) CreatePerson(ctx context.Context, p Person) (int64, error) {
 	return res.LastInsertId()
 }
 
-// GetPersonDetail loads a person's full profile. Returns (nil, nil) if no
-// person with that id exists.
-func (s *Store) GetPersonDetail(ctx context.Context, id int64) (*PersonDetail, error) {
+// UpdatePerson updates a person's core fields (not their sub-collections).
+func (s *Store) UpdatePerson(ctx context.Context, p Person) error {
+	nudge := 0
+	if p.NudgeEnabled {
+		nudge = 1
+	}
+	res, err := s.db.ExecContext(ctx, `
+		UPDATE people SET first_name = ?, last_name = ?, nickname = ?, location = ?, nudge_enabled = ?
+		WHERE id = ?
+	`, p.FirstName, p.LastName, p.Nickname, p.Location, nudge, p.ID)
+	if err != nil {
+		return fmt.Errorf("update person: %w", err)
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("update person rows affected: %w", err)
+	}
+	if n == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}
+
+// DeletePerson removes a person and (via ON DELETE CASCADE) everything
+// attached to them: contact info, important dates, relationships, circle
+// memberships, pets, facts, notes, and reminders/events that reference them.
+func (s *Store) DeletePerson(ctx context.Context, id int64) error {
+	if _, err := s.db.ExecContext(ctx, `DELETE FROM people WHERE id = ?`, id); err != nil {
+		return fmt.Errorf("delete person: %w", err)
+	}
+	return nil
+}
+
+// GetPerson loads a person's core fields only (no sub-collections). Returns
+// (nil, nil) if no person with that id exists. Use this for lightweight
+// operations (edit-form prefill, header re-render) that don't need the full
+// profile.
+func (s *Store) GetPerson(ctx context.Context, id int64) (*Person, error) {
 	var p Person
 	var nudge int
 	err := s.db.QueryRowContext(ctx, `
@@ -132,6 +167,19 @@ func (s *Store) GetPersonDetail(ctx context.Context, id int64) (*PersonDetail, e
 		return nil, fmt.Errorf("get person: %w", err)
 	}
 	p.NudgeEnabled = nudge != 0
+	return &p, nil
+}
+
+// GetPersonDetail loads a person's full profile. Returns (nil, nil) if no
+// person with that id exists.
+func (s *Store) GetPersonDetail(ctx context.Context, id int64) (*PersonDetail, error) {
+	p, err := s.GetPerson(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if p == nil {
+		return nil, nil
+	}
 
 	contactInfo, err := s.ListContactInfo(ctx, id)
 	if err != nil {
@@ -163,7 +211,7 @@ func (s *Store) GetPersonDetail(ctx context.Context, id int64) (*PersonDetail, e
 	}
 
 	return &PersonDetail{
-		Person:            p,
+		Person:            *p,
 		ContactInfo:       contactInfo,
 		ImportantDates:    dates,
 		Relationships:     rels,

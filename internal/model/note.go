@@ -30,3 +30,20 @@ func (s *Store) ListNotes(ctx context.Context, personID int64) ([]Note, error) {
 	}
 	return items, rows.Err()
 }
+
+func (s *Store) CreateNote(ctx context.Context, personID int64, body string) (int64, error) {
+	res, err := s.db.ExecContext(ctx, `
+		INSERT INTO notes (person_id, body) VALUES (?, ?)
+	`, personID, body)
+	if err != nil {
+		return 0, fmt.Errorf("create note: %w", err)
+	}
+	return res.LastInsertId()
+}
+
+func (s *Store) DeleteNote(ctx context.Context, id int64) error {
+	if _, err := s.db.ExecContext(ctx, `DELETE FROM notes WHERE id = ?`, id); err != nil {
+		return fmt.Errorf("delete note: %w", err)
+	}
+	return nil
+}

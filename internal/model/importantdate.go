@@ -35,3 +35,22 @@ func (s *Store) ListImportantDates(ctx context.Context, personID int64) ([]Impor
 	}
 	return items, rows.Err()
 }
+
+// CreateImportantDate inserts a new important date. Pass year=nil for an
+// annually-recurring date (birthday/anniversary with no known year).
+func (s *Store) CreateImportantDate(ctx context.Context, personID int64, typ, label string, month, day int, year *int) (int64, error) {
+	res, err := s.db.ExecContext(ctx, `
+		INSERT INTO important_dates (person_id, type, label, month, day, year) VALUES (?, ?, ?, ?, ?, ?)
+	`, personID, typ, label, month, day, year)
+	if err != nil {
+		return 0, fmt.Errorf("create important date: %w", err)
+	}
+	return res.LastInsertId()
+}
+
+func (s *Store) DeleteImportantDate(ctx context.Context, id int64) error {
+	if _, err := s.db.ExecContext(ctx, `DELETE FROM important_dates WHERE id = ?`, id); err != nil {
+		return fmt.Errorf("delete important date: %w", err)
+	}
+	return nil
+}

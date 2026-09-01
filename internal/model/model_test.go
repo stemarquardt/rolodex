@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	"database/sql"
 	"path/filepath"
 	"testing"
 
@@ -133,5 +134,58 @@ func TestGetPersonDetailAggregatesRelatedData(t *testing.T) {
 	}
 	if missing != nil {
 		t.Fatalf("expected nil for missing person, got %+v", missing)
+	}
+}
+
+func TestUpdateAndDeletePerson(t *testing.T) {
+	ctx := context.Background()
+	s := newTestStore(t)
+
+	id, err := s.CreatePerson(ctx, Person{FirstName: "Maya", LastName: "Chen"})
+	if err != nil {
+		t.Fatalf("CreatePerson: %v", err)
+	}
+
+	err = s.UpdatePerson(ctx, Person{
+		ID: id, FirstName: "Maya", LastName: "Chen-Lee", Nickname: "May", Location: "Oakland, CA", NudgeEnabled: false,
+	})
+	if err != nil {
+		t.Fatalf("UpdatePerson: %v", err)
+	}
+
+	detail, err := s.GetPersonDetail(ctx, id)
+	if err != nil {
+		t.Fatalf("GetPersonDetail: %v", err)
+	}
+	if detail.LastName != "Chen-Lee" || detail.Nickname != "May" || detail.Location != "Oakland, CA" || detail.NudgeEnabled {
+		t.Fatalf("update did not apply: %+v", detail.Person)
+	}
+
+	if err := s.UpdatePerson(ctx, Person{ID: 99999, FirstName: "Nobody"}); err != sql.ErrNoRows {
+		t.Fatalf("expected sql.ErrNoRows updating missing person, got %v", err)
+	}
+
+	if _, err := s.db.ExecContext(ctx, `INSERT INTO pets (person_id, name) VALUES (?, 'Pip')`, id); err != nil {
+		t.Fatalf("insert pet: %v", err)
+	}
+
+	if err := s.DeletePerson(ctx, id); err != nil {
+		t.Fatalf("DeletePerson: %v", err)
+	}
+
+	gone, err := s.GetPersonDetail(ctx, id)
+	if err != nil {
+		t.Fatalf("GetPersonDetail after delete: %v", err)
+	}
+	if gone != nil {
+		t.Fatalf("expected person to be gone, got %+v", gone)
+	}
+
+	var petCount int
+	if err := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM pets WHERE person_id = ?`, id).Scan(&petCount); err != nil {
+		t.Fatalf("count pets: %v", err)
+	}
+	if petCount != 0 {
+		t.Fatalf("expected cascade delete to remove pets, found %d", petCount)
 	}
 }

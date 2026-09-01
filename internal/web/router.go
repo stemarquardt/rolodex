@@ -9,6 +9,32 @@ func NewRouter(h *Handlers, staticDir string) http.Handler {
 	mux.HandleFunc("GET /people", h.PeopleList)
 	mux.HandleFunc("POST /people", h.PeopleCreate)
 	mux.HandleFunc("GET /people/{id}", h.PersonDetail)
+	mux.HandleFunc("PUT /people/{id}", h.PersonUpdate)
+	mux.HandleFunc("DELETE /people/{id}", h.PersonDelete)
+	mux.HandleFunc("GET /people/{id}/edit", h.PersonEdit)
+	mux.HandleFunc("GET /people/{id}/header", h.PersonHeaderView)
+
+	mux.HandleFunc("POST /people/{id}/contact-info", h.ContactInfoCreate)
+	mux.HandleFunc("DELETE /people/{id}/contact-info/{ciID}", h.ContactInfoDelete)
+
+	mux.HandleFunc("POST /people/{id}/important-dates", h.ImportantDateCreate)
+	mux.HandleFunc("DELETE /people/{id}/important-dates/{dateID}", h.ImportantDateDelete)
+
+	mux.HandleFunc("POST /people/{id}/relationships", h.RelationshipCreate)
+	mux.HandleFunc("DELETE /people/{id}/relationships/{relID}", h.RelationshipDelete)
+
+	mux.HandleFunc("POST /people/{id}/circles", h.PersonCircleCreate)
+	mux.HandleFunc("DELETE /people/{id}/circles/{circleID}", h.PersonCircleDelete)
+
+	mux.HandleFunc("POST /people/{id}/pets", h.PetCreate)
+	mux.HandleFunc("DELETE /people/{id}/pets/{petID}", h.PetDelete)
+
+	mux.HandleFunc("POST /people/{id}/facts", h.FactCreate)
+	mux.HandleFunc("DELETE /people/{id}/facts/{factID}", h.FactDelete)
+
+	mux.HandleFunc("POST /people/{id}/notes", h.PersonNoteCreate)
+	mux.HandleFunc("DELETE /people/{id}/notes/{noteID}", h.PersonNoteDelete)
+
 	mux.HandleFunc("GET /circles", h.Circles)
 	mux.HandleFunc("GET /events", h.Events)
 	mux.HandleFunc("GET /reminders", h.Reminders)

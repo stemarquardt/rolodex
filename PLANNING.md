@@ -146,6 +146,77 @@ model — confirmed buildable with no architecture changes. Deltas folded into t
 `PersonCircle.note`, the ImportantDate-vs-Reminder scope split. Explicitly cut from the mockups:
 the "Add a thought" quick-capture flow, pet age tracking, and the profile "Share link" button.
 
+## People CRUD build plan
+
+Building out full create/edit for Person and everything attached to them, since People is the
+foundation every other page (Today, Circles, Events, Reminders) will read from — want the
+create/edit flows solid before layering more on top.
+
+**Scope decision:** full edit-in-place for the Person's core fields (name/nickname/location/nudge
+toggle), but for the repeating sub-collections (contact info, important dates, pets, facts,
+circle memberships, relationships) — **add + delete only, no in-place row edit**. If a detail is
+wrong, delete the row and re-add it. This keeps the number of new forms manageable; true per-row
+editing can be added later if deleting-and-re-adding turns out to be annoying in practice.
+
+**Bug fix bundled in:** `ListRelationships` currently only queries rows where `person_id = ?`, so
+a relationship only shows up on the person who "owns" the row, not on the related person's profile
+via the reverse label. Since relationships are stored as a single directional row (see
+`RelationshipType.name_reverse` above), the query needs to `UNION` both directions — rows where
+this person is `person_id` (shown using `rt.name`) and rows where this person is
+`related_person_id` (shown using `rt.name_reverse`, with the *other* person as the one displayed).
+
+**New Store methods** (`internal/model`):
+- `Person`: `UpdatePerson`, `DeletePerson`
+- `ContactInfo`: `CreateContactInfo`, `DeleteContactInfo`
+- `ImportantDate`: `CreateImportantDate`, `DeleteImportantDate`
+- `Relationship`: `CreateRelationship`, `DeleteRelationship`, `ListRelationshipTypes`; fix
+  `ListRelationships` per above
+- `Circle`: `ListCircles`, `GetOrCreateCircleByName`, `AddPersonToCircle`, `RemovePersonFromCircle`
+  (full Circle list/detail pages are still out of scope — this is just enough plumbing to attach a
+  person to a circle, typing a new or existing circle name into a `<datalist>`-backed input)
+- `Pet`: `CreatePet`, `DeletePet`
+- `Fact`: `CreateFact`, `DeleteFact`
+- `Note`: `CreateNote`, `DeleteNote`
+
+**htmx pattern (uniform across all sub-collections):** each profile panel has an inline "add" form
+below its list. Every mutating endpoint (create or delete) returns the *refreshed list fragment*
+for that sub-collection, targeting a `div id="{entity}-{personID}"` wrapper with `hx-swap="outerHTML"`
+— so create and delete both "just re-render the list," no per-row optimistic-update logic needed.
+Person core-field editing is the one exception: `GET /people/{id}/edit` swaps the header panel into
+an edit form; `PUT /people/{id}` saves and swaps back to view mode.
+
+**New routes** (`internal/web`):
+```
+PUT    /people/{id}                              update core fields
+DELETE /people/{id}                              delete person (redirects to /people)
+GET    /people/{id}/edit                         header panel -> edit form
+
+POST   /people/{id}/contact-info
+DELETE /people/{id}/contact-info/{ciID}
+POST   /people/{id}/important-dates
+DELETE /people/{id}/important-dates/{dateID}
+POST   /people/{id}/pets
+DELETE /people/{id}/pets/{petID}
+POST   /people/{id}/facts
+DELETE /people/{id}/facts/{factID}
+POST   /people/{id}/notes
+DELETE /people/{id}/notes/{noteID}
+POST   /people/{id}/circles                      body: circle_name (+ optional note)
+DELETE /people/{id}/circles/{circleID}
+POST   /people/{id}/relationships                body: related_person_id, relationship_type_id
+DELETE /people/{id}/relationships/{relID}
+```
+
+**Templates:** split `person_detail.templ`'s panels into standalone renderable fragments (so the
+same fragment fn is used for both the full-page initial render and the htmx create/delete
+responses), plus an editable version of the header panel and small add-forms per panel.
+
+**Verification:** Store-level Go tests for every new method (mirroring the existing
+`model_test.go` pattern), plus a manual end-to-end pass: create a person, add one of each
+sub-entity (contact info, important date, pet, fact, note, circle membership, relationship to a
+second person), confirm the reverse relationship shows correctly on the second person's profile,
+delete a couple of rows, edit the core fields, then delete the person entirely.
+
 ## Status
 
 Data model agreed, reviewed against first UI mockups. Go project scaffolded: SQLite schema (13
@@ -154,6 +225,15 @@ tables) + db layer (`internal/db`), model/Store layer (`internal/model`), templ+
 First working vertical slice — People (list, search, add, detail) — is fully wired end to end and
 verified locally via `docker compose up --build`; Today/Circles/Events/Reminders/Notes are stub
 pages with real nav entries. Not yet deployed to the Precision server (local verification only).
+
+People is now a complete create/edit/delete experience: core fields are editable in place, and
+every sub-collection (contact info, important dates, relationships, circles, pets, facts, notes)
+supports add + delete through the uniform htmx list-fragment pattern described above. The
+relationship bidirectionality bug is fixed and covered by a test (`TestRelationshipBidirectionalDisplay`).
+Full manual verification pass (create two people, attach one of everything, confirm the reverse
+relationship label, edit core fields, delete rows, delete a person, confirm cascade cleanup,
+confirm persistence across a container restart) completed successfully via
+`docker compose up --build`. All Go tests pass (`internal/db`, `internal/model`).
 
 Next: build out Today (the real aggregation queries), Circles, Visits & events, and Reminders pages
 against the same Store pattern; then deploy to the Precision server via `docker compose up -d

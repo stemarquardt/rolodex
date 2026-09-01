@@ -30,3 +30,20 @@ func (s *Store) ListContactInfo(ctx context.Context, personID int64) ([]ContactI
 	}
 	return items, rows.Err()
 }
+
+func (s *Store) CreateContactInfo(ctx context.Context, personID int64, typ, value string) (int64, error) {
+	res, err := s.db.ExecContext(ctx, `
+		INSERT INTO contact_info (person_id, type, value) VALUES (?, ?, ?)
+	`, personID, typ, value)
+	if err != nil {
+		return 0, fmt.Errorf("create contact info: %w", err)
+	}
+	return res.LastInsertId()
+}
+
+func (s *Store) DeleteContactInfo(ctx context.Context, id int64) error {
+	if _, err := s.db.ExecContext(ctx, `DELETE FROM contact_info WHERE id = ?`, id); err != nil {
+		return fmt.Errorf("delete contact info: %w", err)
+	}
+	return nil
+}
