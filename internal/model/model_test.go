@@ -53,6 +53,31 @@ func TestCreateAndListPeople(t *testing.T) {
 	}
 }
 
+func TestFindPersonByName(t *testing.T) {
+	ctx := context.Background()
+	s := newTestStore(t)
+
+	id, err := s.CreatePerson(ctx, Person{FirstName: "Maya", LastName: "Chen"})
+	if err != nil {
+		t.Fatalf("CreatePerson: %v", err)
+	}
+
+	got, err := s.FindPersonByName(ctx, "maya", "CHEN")
+	if err != nil || got == nil || got.ID != id {
+		t.Fatalf("expected case-insensitive match, got %+v, err=%v", got, err)
+	}
+
+	got, err = s.FindPersonByName(ctx, "Maya", "Rivera")
+	if err != nil || got != nil {
+		t.Fatalf("expected no match on last name alone, got %+v, err=%v", got, err)
+	}
+
+	got, err = s.FindPersonByName(ctx, "Nobody", "Chen")
+	if err != nil || got != nil {
+		t.Fatalf("expected no match on first name alone, got %+v, err=%v", got, err)
+	}
+}
+
 func TestGetPersonDetailAggregatesRelatedData(t *testing.T) {
 	ctx := context.Background()
 	s := newTestStore(t)

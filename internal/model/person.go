@@ -171,6 +171,29 @@ func (s *Store) GetPerson(ctx context.Context, id int64) (*Person, error) {
 	return &p, nil
 }
 
+// FindPersonByName looks up a person by an exact case-insensitive match on
+// both first and last name. Returns (nil, nil) if no match exists. Used by
+// the contacts importer (internal/importer) to skip re-creating a person on
+// a repeat import run, rather than the fuzzier OR-across-fields matching
+// ListPeople's search does.
+func (s *Store) FindPersonByName(ctx context.Context, firstName, lastName string) (*Person, error) {
+	var p Person
+	var nudge int
+	err := s.db.QueryRowContext(ctx, `
+		SELECT id, first_name, last_name, nickname, location, nudge_enabled
+		FROM people WHERE first_name = ? COLLATE NOCASE AND last_name = ? COLLATE NOCASE
+		LIMIT 1
+	`, firstName, lastName).Scan(&p.ID, &p.FirstName, &p.LastName, &p.Nickname, &p.Location, &nudge)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("find person by name: %w", err)
+	}
+	p.NudgeEnabled = nudge != 0
+	return &p, nil
+}
+
 // StalePerson is a nudge-enabled person flagged for the Today page's
 // staleness section because no Note has been logged for them recently.
 type StalePerson struct {

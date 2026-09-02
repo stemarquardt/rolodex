@@ -133,7 +133,7 @@ and reinforces the "I own this data" motivation. No scheduled/automatic backups 
 **In:** Person, ContactInfo, Circle/PersonCircle, RelationshipType/Relationship, ImportantDate,
 Event/EventPerson, Reminder, Note, Pet, Fact, the Today pull page, JSON export.
 
-**Deferred:** multi-user/auth, vCard/CardDAV import-sync, tags beyond Circles, avatars/file
+**Deferred:** multi-user/auth, ongoing vCard/CardDAV *sync*, tags beyond Circles, avatars/file
 uploads, gift/loan tracking, journal/mood tracking, push/SMS notifications, hierarchical or
 sub-circles, roles within Events, pet age/birthdate, freeform "thoughts" not tied to a person,
 public/external share links (profile pages are only ever viewed over Tailscale, by the owner —
@@ -285,5 +285,21 @@ The `/notes` nav stub has been removed (along with `templates.ComingSoon` and `i
 now unused) — Notes are logged inline per-person via `NotesSection` on the profile page, so a
 separate Notes page was redundant scope, not a deferred feature.
 
+A one-time Google Contacts import tool now exists: `cmd/import` reads a Google Takeout vCard (.vcf)
+export and creates People plus attached ContactInfo/ImportantDates/Circles/Notes/Facts, via a new
+`internal/importer` package that composes existing Store methods (no schema changes). Deliberately
+*not* a persistent sync feature or web UI — a plain CLI (`go run ./cmd/import -dry-run
+contacts.vcf`, then without `-dry-run` for real), safe to re-run against a fresh export later since
+people are matched by exact first+last name (`Store.FindPersonByName`, new) and skipped rather than
+duplicated on a repeat run. Google's Labels become Circles for free via the existing
+`GetOrCreateCircleByName`/`AddPersonToCircle`. Covered by `internal/importer/importer_test.go`
+(field mapping including both no-year birthday forms — vCard's `--MM-DD` and Google's `1604`
+placeholder-year convention — plus the idempotent-rerun and dry-run-writes-nothing cases); verified
+manually end-to-end (dry-run preview, real import, re-run no-op, browsed the imported profiles in
+the UI). Must be run with the docker compose server stopped (or before starting it) — SQLite is
+single-writer and `internal/db.Open` caps the pool at 1 connection.
+
 Next: deploy to the Precision server via `docker compose up -d --build` over Tailscale — the only
-remaining item from the original MVP scope.
+remaining item from the original MVP scope. The user's own Google Contacts export hasn't been run
+through `cmd/import` yet in this environment (that's a local, personal-data operation for them to
+do on their machine) — worth checking in on before/around deploy.
