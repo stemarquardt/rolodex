@@ -1,0 +1,93 @@
+package templates
+
+import (
+	"fmt"
+
+	"rolodex/internal/model"
+)
+
+templ Today(dates []model.UpcomingImportantDate, events []model.Event, reminders []model.Reminder, stale []model.StalePerson) {
+	@Layout("today", "Personal CRM", "Today", "Here's what's worth holding in mind today.") {
+		@ImportantDatesToday(dates)
+		@EventsNeedingAttention(events)
+		@RemindersToday(reminders)
+		@PeopleGoingQuiet(stale)
+	}
+}
+
+templ ImportantDatesToday(dates []model.UpcomingImportantDate) {
+	<div class="panel">
+		<div class="section-title">Important dates (next 14 days)</div>
+		if len(dates) == 0 {
+			<div class="muted">Nothing coming up in the next two weeks.</div>
+		}
+		for _, d := range dates {
+			<div class="list-row">
+				<span class="tag">{ d.Label }</span>
+				<a href={ templ.URL(personURL(d.PersonID)) } style="flex:1;">{ d.PersonName }</a>
+				<span class="muted">{ formatImportantDate(d.ImportantDate) }</span>
+				<span class="muted" style="width:90px;text-align:right;">{ relativeDays(d.DaysUntil) }</span>
+			</div>
+		}
+	</div>
+}
+
+templ EventsNeedingAttention(events []model.Event) {
+	<div class="panel">
+		<div class="section-title">Visits needing attention</div>
+		if len(events) == 0 {
+			<div class="muted">Nothing needs a decision right now.</div>
+		}
+		for _, e := range events {
+			<div class="list-row">
+				<span class="tag">{ e.Status }</span>
+				<span style="flex:1;">{ eventLabel(e) }</span>
+				<span class="muted">{ eventWhen(e) }</span>
+			</div>
+		}
+	</div>
+}
+
+templ RemindersToday(reminders []model.Reminder) {
+	<div class="panel">
+		<div class="section-title">Reminders</div>
+		if len(reminders) == 0 {
+			<div class="muted">No reminders due.</div>
+		}
+		for _, r := range reminders {
+			<div class="list-row">
+				<span style="flex:1;">
+					{ r.Note }
+					if r.PersonName != "" {
+						<span class="muted"> · { r.PersonName }</span>
+					}
+				</span>
+				if r.Recurring() {
+					<span class="tag">recurring</span>
+				}
+				<span class="muted">{ r.DueDate }</span>
+			</div>
+		}
+	</div>
+}
+
+templ PeopleGoingQuiet(stale []model.StalePerson) {
+	<div class="panel">
+		<div class="section-title">People going quiet</div>
+		if len(stale) == 0 {
+			<div class="muted">Everyone's been checked in on recently.</div>
+		}
+		for _, p := range stale {
+			<div class="list-row">
+				<a href={ templ.URL(personURL(p.PersonID)) } style="flex:1;">{ p.PersonName }</a>
+				<span class="muted">
+					if p.DaysStale < 0 {
+						No notes yet
+					} else {
+						{ fmt.Sprintf("%d days quiet", p.DaysStale) }
+					}
+				</span>
+			</div>
+		}
+	</div>
+}

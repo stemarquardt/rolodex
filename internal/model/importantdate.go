@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"sort"
+	"time"
 )
 
 type ImportantDate struct {
@@ -53,4 +55,72 @@ func (s *Store) DeleteImportantDate(ctx context.Context, id int64) error {
 		return fmt.Errorf("delete important date: %w", err)
 	}
 	return nil
+}
+
+// UpcomingImportantDate is an ImportantDate whose next annual occurrence has
+// been resolved against today's date, for cross-person display on the Today
+// page (ListImportantDates only ever queries one person at a time).
+type UpcomingImportantDate struct {
+	ImportantDate
+	PersonID   int64
+	PersonName string
+	DaysUntil  int
+}
+
+// ListUpcomingImportantDates returns important dates across all people whose
+// next annual occurrence falls within the next withinDays days (0 = today),
+// soonest first. The month/day recur every year regardless of the stored
+// `year` value, so the "next occurrence" is resolved in Go rather than SQL.
+func (s *Store) ListUpcomingImportantDates(ctx context.Context, withinDays int) ([]UpcomingImportantDate, error) {
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT d.id, d.type, d.label, d.month, d.day, d.year,
+		       p.id, p.first_name, p.last_name, p.nickname
+		FROM important_dates d
+		JOIN people p ON p.id = d.person_id
+	`)
+	if err != nil {
+		return nil, fmt.Errorf("list upcoming important dates: %w", err)
+	}
+	defer rows.Close()
+
+	now := time.Now()
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+
+	var upcoming []UpcomingImportantDate
+	for rows.Next() {
+		var d ImportantDate
+		var p Person
+		if err := rows.Scan(&d.ID, &d.Type, &d.Label, &d.Month, &d.Day, &d.Year,
+			&p.ID, &p.FirstName, &p.LastName, &p.Nickname); err != nil {
+			return nil, fmt.Errorf("scan upcoming important date: %w", err)
+		}
+
+		next := nextOccurrence(today, d.Month, d.Day)
+		daysUntil := int(next.Sub(today).Hours() / 24)
+		if daysUntil > withinDays {
+			continue
+		}
+		upcoming = append(upcoming, UpcomingImportantDate{
+			ImportantDate: d,
+			PersonID:      p.ID,
+			PersonName:    p.FullName(),
+			DaysUntil:     daysUntil,
+		})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	sort.Slice(upcoming, func(i, j int) bool { return upcoming[i].DaysUntil < upcoming[j].DaysUntil })
+	return upcoming, nil
+}
+
+// nextOccurrence returns the next date on/after today with the given
+// month/day, rolling to next year if this year's occurrence already passed.
+func nextOccurrence(today time.Time, month, day int) time.Time {
+	candidate := time.Date(today.Year(), time.Month(month), day, 0, 0, 0, 0, today.Location())
+	if candidate.Before(today) {
+		candidate = time.Date(today.Year()+1, time.Month(month), day, 0, 0, 0, 0, today.Location())
+	}
+	return candidate
 }

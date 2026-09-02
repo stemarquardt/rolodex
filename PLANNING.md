@@ -235,6 +235,16 @@ relationship label, edit core fields, delete rows, delete a person, confirm casc
 confirm persistence across a container restart) completed successfully via
 `docker compose up --build`. All Go tests pass (`internal/db`, `internal/model`).
 
-Next: build out Today (the real aggregation queries), Circles, Visits & events, and Reminders pages
-against the same Store pattern; then deploy to the Precision server via `docker compose up -d
---build` over Tailscale.
+Today is now built against the real aggregation queries described above: upcoming ImportantDates
+(next 14 days, next annual occurrence resolved in Go since the recurrence is calendar-based, not
+something SQLite date math handles cleanly), Events needing attention (tentative regardless of
+date, or confirmed within 14 days), due/overdue Reminders, and staleness nudges (nudge-enabled
+people with no Note in 60+ days, computed via a `julianday` SQL query). Covered by Store-level
+tests (`internal/model/today_test.go`) and verified manually via `docker compose up --build` with
+seeded events/reminders/notes exercising all four sections, including a person dropping out of the
+staleness list after a new Note is added. No CRUD UI for Events/Reminders yet — Today is read-only
+against those tables until those pages are built.
+
+Next: build out Circles and Visits & events pages (Reminders CRUD can likely piggyback on the
+Visits & events pass, or come as its own small page) against the same Store pattern; then deploy to
+the Precision server via `docker compose up -d --build` over Tailscale.

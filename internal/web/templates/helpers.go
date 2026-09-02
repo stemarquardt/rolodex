@@ -100,3 +100,46 @@ func noteDeleteURL(personID, id int64) string {
 }
 
 func idStr(id int64) string { return fmt.Sprintf("%d", id) }
+
+func relativeDays(daysUntil int) string {
+	switch {
+	case daysUntil == 0:
+		return "today"
+	case daysUntil == 1:
+		return "tomorrow"
+	default:
+		return fmt.Sprintf("in %d days", daysUntil)
+	}
+}
+
+func eventPeopleNames(people []model.Person) string {
+	names := make([]string, len(people))
+	for i, p := range people {
+		names[i] = p.FullName()
+	}
+	return strings.Join(names, ", ")
+}
+
+// eventLabel picks the best available display name for an event: its title
+// if set, otherwise the participants' names, otherwise just its kind.
+func eventLabel(e model.Event) string {
+	if e.Title != "" {
+		return e.Title
+	}
+	if names := eventPeopleNames(e.People); names != "" {
+		return names
+	}
+	return e.Kind
+}
+
+// eventWhen renders an event's timing: its start date if set, otherwise its
+// freeform timeframe note, otherwise a placeholder for still-undated events.
+func eventWhen(e model.Event) string {
+	if e.StartDate.Valid && e.StartDate.String != "" {
+		return e.StartDate.String
+	}
+	if e.TimeframeNote != "" {
+		return e.TimeframeNote
+	}
+	return "no date yet"
+}

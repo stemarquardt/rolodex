@@ -170,6 +170,54 @@ func (s *Store) GetPerson(ctx context.Context, id int64) (*Person, error) {
 	return &p, nil
 }
 
+// StalePerson is a nudge-enabled person flagged for the Today page's
+// staleness section because no Note has been logged for them recently.
+type StalePerson struct {
+	PersonID   int64
+	PersonName string
+	DaysStale  int // -1 if no note has ever been logged for this person
+}
+
+// ListStalePeople returns nudge-enabled people who haven't had a note logged
+// in more than thresholdDays days (or ever), most-stale (or never-contacted)
+// first.
+func (s *Store) ListStalePeople(ctx context.Context, thresholdDays int) ([]StalePerson, error) {
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT id, first_name, last_name, nickname, last_contact,
+		       CASE WHEN last_contact = '' THEN -1
+		            ELSE CAST(julianday('now') - julianday(last_contact) AS INTEGER)
+		       END AS days_stale
+		FROM (
+			SELECT p.id, p.first_name, p.last_name, p.nickname,
+			       COALESCE(MAX(n.created_at), '') AS last_contact
+			FROM people p
+			LEFT JOIN notes n ON n.person_id = p.id
+			WHERE p.nudge_enabled = 1
+			GROUP BY p.id
+		)
+		WHERE last_contact = '' OR julianday('now') - julianday(last_contact) > ?
+		ORDER BY (last_contact = '') DESC, last_contact ASC
+	`, thresholdDays)
+	if err != nil {
+		return nil, fmt.Errorf("list stale people: %w", err)
+	}
+	defer rows.Close()
+
+	var stale []StalePerson
+	for rows.Next() {
+		var p Person
+		var lastContact string
+		var sp StalePerson
+		if err := rows.Scan(&p.ID, &p.FirstName, &p.LastName, &p.Nickname, &lastContact, &sp.DaysStale); err != nil {
+			return nil, fmt.Errorf("scan stale person: %w", err)
+		}
+		sp.PersonID = p.ID
+		sp.PersonName = p.FullName()
+		stale = append(stale, sp)
+	}
+	return stale, rows.Err()
+}
+
 // GetPersonDetail loads a person's full profile. Returns (nil, nil) if no
 // person with that id exists.
 func (s *Store) GetPersonDetail(ctx context.Context, id int64) (*PersonDetail, error) {

@@ -6,10 +6,6 @@ import (
 	"rolodex/internal/web/templates"
 )
 
-func (h *Handlers) Today(w http.ResponseWriter, r *http.Request) {
-	templates.ComingSoon("today", "Today").Render(r.Context(), w)
-}
-
 func (h *Handlers) Circles(w http.ResponseWriter, r *http.Request) {
 	templates.ComingSoon("circles", "Circles").Render(r.Context(), w)
 }
