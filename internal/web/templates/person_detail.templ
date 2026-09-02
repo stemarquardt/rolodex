@@ -143,7 +143,14 @@ templ ImportantDatesSection(personID int64, items []model.ImportantDate, typeOpt
 				}
 			</select>
 			<input type="text" name="label" placeholder="Label (optional — defaults to type)"/>
-			<input type="number" name="month" placeholder="Month" min="1" max="12" required style="width:80px;"/>
+			<select name="month" required>
+				<option value="" disabled selected>Month</option>
+				for i, name := range monthNames {
+					if i > 0 {
+						<option value={ idStr(int64(i)) }>{ name }</option>
+					}
+				}
+			</select>
 			<input type="number" name="day" placeholder="Day" min="1" max="31" required style="width:70px;"/>
 			<input type="number" name="year" placeholder="Year (optional)" style="width:110px;"/>
 			<button class="btn" type="submit">+ Add</button>
