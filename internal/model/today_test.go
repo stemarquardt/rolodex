@@ -10,6 +10,13 @@ func TestListUpcomingImportantDates(t *testing.T) {
 	ctx := context.Background()
 	s := newTestStore(t)
 	personID, _ := s.CreatePerson(ctx, Person{FirstName: "Maya", LastName: "Chen"})
+	circleID, err := s.GetOrCreateCircleByName(ctx, "Rock Climbing Friends")
+	if err != nil {
+		t.Fatalf("GetOrCreateCircleByName: %v", err)
+	}
+	if err := s.AddPersonToCircle(ctx, personID, circleID, ""); err != nil {
+		t.Fatalf("AddPersonToCircle: %v", err)
+	}
 
 	soon := time.Now().AddDate(0, 0, 5)
 	far := time.Now().AddDate(0, 0, 30)
@@ -29,6 +36,9 @@ func TestListUpcomingImportantDates(t *testing.T) {
 	}
 	if upcoming[0].Label != "Birthday" || upcoming[0].PersonID != personID || upcoming[0].DaysUntil != 5 {
 		t.Fatalf("unexpected upcoming date: %+v", upcoming[0])
+	}
+	if len(upcoming[0].Circles) != 1 || upcoming[0].Circles[0] != "Rock Climbing Friends" {
+		t.Fatalf("expected upcoming date to carry the person's circle, got %+v", upcoming[0].Circles)
 	}
 }
 

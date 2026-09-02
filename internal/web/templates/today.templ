@@ -24,6 +24,9 @@ templ ImportantDatesToday(dates []model.UpcomingImportantDate) {
 		for _, d := range dates {
 			<div class="list-row">
 				<span class="tag">{ d.Label }</span>
+				for _, c := range d.Circles {
+					<span class="tag">{ c }</span>
+				}
 				<a href={ templ.URL(personURL(d.PersonID)) } style="flex:1;">{ d.PersonName }</a>
 				<span class="muted">{ formatImportantDate(d.ImportantDate) }</span>
 				<span class="muted" style="width:90px;text-align:right;">{ relativeDays(d.DaysUntil) }</span>

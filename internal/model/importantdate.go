@@ -65,6 +65,7 @@ type UpcomingImportantDate struct {
 	PersonID   int64
 	PersonName string
 	DaysUntil  int
+	Circles    []string
 }
 
 // ListUpcomingImportantDates returns important dates across all people whose
@@ -112,6 +113,19 @@ func (s *Store) ListUpcomingImportantDates(ctx context.Context, withinDays int) 
 	}
 
 	sort.Slice(upcoming, func(i, j int) bool { return upcoming[i].DaysUntil < upcoming[j].DaysUntil })
+
+	for i := range upcoming {
+		memberships, err := s.ListCircleMemberships(ctx, upcoming[i].PersonID)
+		if err != nil {
+			return nil, err
+		}
+		circles := make([]string, len(memberships))
+		for j, m := range memberships {
+			circles[j] = m.CircleName
+		}
+		upcoming[i].Circles = circles
+	}
+
 	return upcoming, nil
 }
 
