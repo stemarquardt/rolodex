@@ -261,9 +261,27 @@ the same tolerance already present in `RelationshipsSection` on the person profi
 harmless here since `AddPersonToCircle` is an upsert (re-selecting an already-added person just
 updates their note, no duplicate).
 
-Next: build out Visits & Events (Event CRUD with the idea → tentative → confirmed → done/cancelled
-status flow, `EventPerson` multi-person picker) and Reminders (CRUD + the "compute next due_date on
-completion" logic for recurring reminders) against the same Store pattern — these are what currently
-let Today's "Visits needing attention" and "Reminders" sections only be exercised via raw SQL in
-tests, with no UI to create that data yet. Then deploy to the Precision server via
-`docker compose up -d --build` over Tailscale.
+Visits & Events and Reminders are now built out, closing the last gap Today had (those sections
+were previously only exercised via raw SQL in tests). Events (`/events`) has a list page grouping
+by status (Idea / Tentative / Confirmed & upcoming, with done/cancelled collapsed into "Past") and
+a detail page with edit-in-place core fields plus add/delete-only participant management (reusing
+the `AddPersonToCircle`-style plumbing pattern, now `AddPersonToEvent`/`RemovePersonFromEvent`).
+`kind` and `status` are free-text-with-datalist, matching how `ContactInfo.type` already works, so
+new kinds/statuses need no schema change. Reminders (`/reminders`) has a create form (optional
+person/event link, optional recurrence) plus Pending/Done sections; a matching Reminders section
+was added to the person profile page. The one new interaction beyond add/delete is **complete**:
+`CompleteReminder` marks a one-off reminder `done`, but advances a recurring reminder's `due_date`
+by its interval/unit and leaves it `pending` — implemented and covered by
+`internal/model/reminder_test.go` (`TestCompleteReminderRecurring`, one case per unit: days/weeks/
+months). Also covered: `internal/model/event_test.go` (create/update/delete, participant add/remove
+including idempotent re-add, `ListEvents` group-ordering). Verified manually via
+`docker compose up --build`: created an idea-status event (showed in the right group), added it a
+title/date/participants, confirmed it surfaced in Today's "Visits needing attention"; created both a
+one-off and a recurring person-linked reminder, confirmed both display correctly on `/reminders` and
+the person's own profile, completed both and confirmed the one-off/recurring behavior split exactly
+as designed; deleted an event with participants and confirmed cascade cleanup.
+
+Next: deploy to the Precision server via `docker compose up -d --build` over Tailscale — this is now
+the only remaining item from the original MVP scope. (Notes has its own nav entry but is still a
+stub; per the data model, Notes are logged inline on a person's profile, not through a separate
+page, so that stub may just get removed rather than built out — worth revisiting before deploy.)

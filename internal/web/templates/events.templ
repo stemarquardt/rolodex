@@ -1,0 +1,191 @@
+package templates
+
+import (
+	"rolodex/internal/model"
+)
+
+templ EventsList(events []model.Event) {
+	@Layout("events", "Personal CRM", "Visits & events", "Keep the good intentions somewhere gentle.") {
+		<form
+			class="inline-form"
+			hx-post="/events"
+			hx-target={ "#" + eventGroupsID }
+			hx-swap="outerHTML"
+			hx-on::after-request="if(event.detail.successful) this.reset()"
+		>
+			<input list="event-kinds" type="text" name="kind" placeholder="Kind (visit, trip...)" required/>
+			<datalist id="event-kinds">
+				<option value="visit"></option>
+				<option value="trip"></option>
+				<option value="gathering"></option>
+			</datalist>
+			<input list="event-statuses" type="text" name="status" placeholder="Status (idea, tentative...)"/>
+			<datalist id="event-statuses">
+				<option value="idea"></option>
+				<option value="tentative"></option>
+				<option value="confirmed"></option>
+			</datalist>
+			<input type="text" name="title" placeholder="Title (optional)"/>
+			<input type="date" name="start_date"/>
+			<input type="text" name="timeframe_note" placeholder="Timeframe (e.g. maybe this fall)"/>
+			<button class="btn btn-primary" type="submit">+ Add visit</button>
+		</form>
+		@EventGroups(events)
+	}
+}
+
+templ EventGroups(events []model.Event) {
+	<div id={ eventGroupsID }>
+		@EventGroup("Idea", filterEventsByStatus(events, "idea"))
+		@EventGroup("Tentative", filterEventsByStatus(events, "tentative"))
+		@EventGroup("Confirmed & upcoming", filterEventsByStatus(events, "confirmed"))
+		@EventGroup("Past", filterEventsPast(events))
+		if len(events) == 0 {
+			<div class="panel muted">No visits or events yet — add your first one above.</div>
+		}
+	</div>
+}
+
+templ EventGroup(title string, events []model.Event) {
+	if len(events) > 0 {
+		<div class="panel">
+			<div class="section-title">{ title } ({ idStr(int64(len(events))) })</div>
+			for _, e := range events {
+				<div class="list-row">
+					<span class="tag">{ e.Status }</span>
+					<a href={ templ.URL(eventURL(e.ID)) } style="flex:1;">
+						{ eventLabel(e) }
+						if len(e.People) > 0 && e.Title != "" {
+							<span class="muted"> · { eventPeopleNames(e.People) }</span>
+						}
+					</a>
+					<span class="muted">{ eventWhen(e) }</span>
+				</div>
+			}
+		</div>
+	}
+}
+
+templ EventDetail(event *model.Event, otherPeople []model.Person) {
+	@Layout("events", "Visits & events / Detail", eventLabel(*event), "") {
+		@EventHeader(*event)
+		@EventParticipantsSection(event.ID, event.People, otherPeople)
+	}
+}
+
+templ EventHeader(e model.Event) {
+	<div class="panel" id={ eventHeaderID(e.ID) }>
+		<div style="display:flex;justify-content:space-between;align-items:flex-start;">
+			<div>
+				<div style="font-size:20px;font-weight:600;">{ eventLabel(e) }</div>
+				<div class="muted" style="margin-top:4px;">
+					<span class="tag">{ e.Kind }</span>
+					<span class="tag">{ e.Status }</span>
+					{ eventWhen(e) }
+				</div>
+				if e.Notes != "" {
+					<div class="muted" style="margin-top:10px;">{ e.Notes }</div>
+				}
+			</div>
+			<div style="display:flex;gap:8px;">
+				<button class="btn" hx-get={ eventEditURL(e.ID) } hx-target={ "#" + eventHeaderID(e.ID) } hx-swap="outerHTML">Edit</button>
+				<button
+					class="btn"
+					hx-delete={ eventURL(e.ID) }
+					hx-confirm="Delete this event? This removes its participants and any linked reminders."
+					hx-target="body"
+				>
+					Delete event
+				</button>
+			</div>
+		</div>
+	</div>
+}
+
+templ EventHeaderEdit(e model.Event) {
+	<div class="panel" id={ eventHeaderID(e.ID) }>
+		<form hx-put={ eventURL(e.ID) } hx-target={ "#" + eventHeaderID(e.ID) } hx-swap="outerHTML">
+			<div class="inline-form">
+				<input list="event-kinds" type="text" name="kind" placeholder="Kind" value={ e.Kind } required/>
+				<datalist id="event-kinds">
+					<option value="visit"></option>
+					<option value="trip"></option>
+					<option value="gathering"></option>
+				</datalist>
+				<input list="event-statuses" type="text" name="status" placeholder="Status" value={ e.Status } required/>
+				<datalist id="event-statuses">
+					<option value="idea"></option>
+					<option value="tentative"></option>
+					<option value="confirmed"></option>
+					<option value="done"></option>
+					<option value="cancelled"></option>
+				</datalist>
+				<input type="text" name="title" placeholder="Title (optional)" value={ e.Title }/>
+			</div>
+			<div class="inline-form">
+				<input type="date" name="start_date" value={ e.StartDate.String }/>
+				<input type="date" name="end_date" value={ e.EndDate.String }/>
+				<input type="text" name="timeframe_note" placeholder="Timeframe (optional)" value={ e.TimeframeNote }/>
+			</div>
+			<div class="inline-form">
+				<input type="text" name="notes" placeholder="Notes" value={ e.Notes } style="flex:1;"/>
+			</div>
+			<div style="display:flex;gap:8px;">
+				<button class="btn btn-primary" type="submit">Save</button>
+				<button
+					class="btn"
+					type="button"
+					hx-get={ eventHeaderURL(e.ID) }
+					hx-target={ "#" + eventHeaderID(e.ID) }
+					hx-swap="outerHTML"
+				>
+					Cancel
+				</button>
+			</div>
+		</form>
+	</div>
+}
+
+templ EventParticipantsSection(eventID int64, people []model.Person, otherPeople []model.Person) {
+	<div class="panel">
+		<div class="section-title">Who's involved</div>
+		@EventParticipantsList(eventID, people)
+		if len(otherPeople) > 0 {
+			<form
+				class="inline-form"
+				hx-post={ eventParticipantCreateURL(eventID) }
+				hx-target={ "#" + eventParticipantListID(eventID) }
+				hx-swap="outerHTML"
+			>
+				<select name="person_id">
+					for _, p := range otherPeople {
+						<option value={ idStr(p.ID) }>{ p.FullName() }</option>
+					}
+				</select>
+				<button class="btn" type="submit">+ Add</button>
+			</form>
+		}
+	</div>
+}
+
+templ EventParticipantsList(eventID int64, people []model.Person) {
+	<div id={ eventParticipantListID(eventID) }>
+		if len(people) == 0 {
+			<div class="muted">No one added yet.</div>
+		}
+		for _, p := range people {
+			<div class="list-row">
+				<a href={ templ.URL(personURL(p.ID)) } style="flex:1;">{ p.FullName() }</a>
+				<button
+					class="btn"
+					hx-delete={ eventParticipantDeleteURL(eventID, p.ID) }
+					hx-target={ "#" + eventParticipantListID(eventID) }
+					hx-swap="outerHTML"
+					hx-confirm="Remove this person from the event?"
+				>
+					Remove
+				</button>
+			</div>
+		}
+	</div>
+}

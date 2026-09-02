@@ -156,3 +156,72 @@ func eventWhen(e model.Event) string {
 	}
 	return "no date yet"
 }
+
+const eventGroupsID = "event-groups"
+
+// filterEventsByStatus returns the subset of events with the given status,
+// preserving order (events is already sorted by ListEvents).
+func filterEventsByStatus(events []model.Event, status string) []model.Event {
+	var out []model.Event
+	for _, e := range events {
+		if e.Status == status {
+			out = append(out, e)
+		}
+	}
+	return out
+}
+
+// filterEventsPast returns events that are done or cancelled, collapsed into
+// one "Past" group on the Events page.
+func filterEventsPast(events []model.Event) []model.Event {
+	var out []model.Event
+	for _, e := range events {
+		if e.Status == "done" || e.Status == "cancelled" {
+			out = append(out, e)
+		}
+	}
+	return out
+}
+
+func eventURL(id int64) string       { return fmt.Sprintf("/events/%d", id) }
+func eventHeaderID(id int64) string  { return fmt.Sprintf("event-header-%d", id) }
+func eventHeaderURL(id int64) string { return fmt.Sprintf("/events/%d/header", id) }
+func eventEditURL(id int64) string   { return fmt.Sprintf("/events/%d/edit", id) }
+
+func eventParticipantListID(eventID int64) string {
+	return fmt.Sprintf("event-participants-%d", eventID)
+}
+func eventParticipantCreateURL(eventID int64) string {
+	return fmt.Sprintf("/events/%d/participants", eventID)
+}
+func eventParticipantDeleteURL(eventID, personID int64) string {
+	return fmt.Sprintf("/events/%d/participants/%d", eventID, personID)
+}
+
+const reminderSectionsID = "reminder-sections"
+
+// filterRemindersByStatus splits ListReminders/ListRemindersForPerson's
+// combined pending+done result into one bucket or the other.
+func filterRemindersByStatus(reminders []model.Reminder, done bool) []model.Reminder {
+	var out []model.Reminder
+	for _, r := range reminders {
+		if (r.Status == "done") == done {
+			out = append(out, r)
+		}
+	}
+	return out
+}
+
+func reminderDeleteURL(id int64) string   { return fmt.Sprintf("/reminders/%d", id) }
+func reminderCompleteURL(id int64) string { return fmt.Sprintf("/reminders/%d/complete", id) }
+
+func personReminderListID(personID int64) string { return fmt.Sprintf("reminders-list-%d", personID) }
+func personReminderCreateURL(personID int64) string {
+	return fmt.Sprintf("/people/%d/reminders", personID)
+}
+func personReminderDeleteURL(personID, id int64) string {
+	return fmt.Sprintf("/people/%d/reminders/%d", personID, id)
+}
+func personReminderCompleteURL(personID, id int64) string {
+	return fmt.Sprintf("/people/%d/reminders/%d/complete", personID, id)
+}

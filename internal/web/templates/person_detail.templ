@@ -14,6 +14,7 @@ templ PersonDetail(detail *model.PersonDetail, otherPeople []model.Person, circl
 		@CirclesSection(detail.ID, detail.CircleMemberships, circles)
 		@PetsSection(detail.ID, detail.Pets)
 		@FactsSection(detail.ID, detail.Facts)
+		@RemindersSection(detail.ID, detail.Reminders)
 		@NotesSection(detail.ID, detail.Notes)
 	}
 }
@@ -358,6 +359,72 @@ templ FactsList(personID int64, items []model.Fact) {
 					hx-confirm="Remove this fact?"
 				>
 					Remove
+				</button>
+			</div>
+		}
+	</div>
+}
+
+templ RemindersSection(personID int64, items []model.Reminder) {
+	<div class="panel">
+		<div class="section-title">Reminders</div>
+		<form
+			class="inline-form"
+			hx-post={ personReminderCreateURL(personID) }
+			hx-target={ "#" + personReminderListID(personID) }
+			hx-swap="outerHTML"
+			hx-on::after-request="if(event.detail.successful) this.reset()"
+		>
+			<input type="text" name="note" placeholder="Remind me to..." required style="flex:1;"/>
+			<input type="date" name="due_date" required/>
+			<input type="number" name="recurrence_interval" placeholder="Every" min="1" style="width:70px;"/>
+			<select name="recurrence_unit">
+				<option value="">(one-off)</option>
+				<option value="days">days</option>
+				<option value="weeks">weeks</option>
+				<option value="months">months</option>
+			</select>
+			<button class="btn" type="submit">+ Add</button>
+		</form>
+		@PersonRemindersList(personID, items)
+	</div>
+}
+
+templ PersonRemindersList(personID int64, items []model.Reminder) {
+	<div id={ personReminderListID(personID) }>
+		if len(items) == 0 {
+			<div class="muted">No reminders for this person yet.</div>
+		}
+		for _, r := range items {
+			<div class="list-row">
+				<span style="flex:1;">
+					{ r.Note }
+					if r.Status == "done" {
+						<span class="muted"> · done</span>
+					}
+				</span>
+				if r.Recurring() {
+					<span class="tag">recurring</span>
+				}
+				<span class="muted" style="width:100px;">{ r.DueDate }</span>
+				if r.Status != "done" {
+					<button
+						class="btn"
+						hx-post={ personReminderCompleteURL(personID, r.ID) }
+						hx-target={ "#" + personReminderListID(personID) }
+						hx-swap="outerHTML"
+					>
+						Mark done
+					</button>
+				}
+				<button
+					class="btn"
+					hx-delete={ personReminderDeleteURL(personID, r.ID) }
+					hx-target={ "#" + personReminderListID(personID) }
+					hx-swap="outerHTML"
+					hx-confirm="Delete this reminder?"
+				>
+					Delete
 				</button>
 			</div>
 		}

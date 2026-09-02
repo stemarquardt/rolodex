@@ -37,6 +37,7 @@ type PersonDetail struct {
 	Pets              []Pet
 	Facts             []Fact
 	Notes             []Note
+	Reminders         []Reminder
 }
 
 // ListPeople returns all people, each annotated with their circle tags and
@@ -257,6 +258,10 @@ func (s *Store) GetPersonDetail(ctx context.Context, id int64) (*PersonDetail, e
 	if err != nil {
 		return nil, err
 	}
+	reminders, err := s.ListRemindersForPerson(ctx, id)
+	if err != nil {
+		return nil, err
+	}
 
 	return &PersonDetail{
 		Person:            *p,
@@ -266,6 +271,7 @@ func (s *Store) GetPersonDetail(ctx context.Context, id int64) (*PersonDetail, e
 		CircleMemberships: circles,
 		Pets:              pets,
 		Facts:             facts,
+		Reminders:         reminders,
 		Notes:             notes,
 	}, nil
 }

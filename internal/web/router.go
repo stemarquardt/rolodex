@@ -35,6 +35,10 @@ func NewRouter(h *Handlers, staticDir string) http.Handler {
 	mux.HandleFunc("POST /people/{id}/notes", h.PersonNoteCreate)
 	mux.HandleFunc("DELETE /people/{id}/notes/{noteID}", h.PersonNoteDelete)
 
+	mux.HandleFunc("POST /people/{id}/reminders", h.PersonReminderCreate)
+	mux.HandleFunc("DELETE /people/{id}/reminders/{remID}", h.PersonReminderDelete)
+	mux.HandleFunc("POST /people/{id}/reminders/{remID}/complete", h.PersonReminderComplete)
+
 	mux.HandleFunc("GET /circles", h.CirclesList)
 	mux.HandleFunc("POST /circles", h.CircleCreate)
 	mux.HandleFunc("GET /circles/{id}", h.CircleDetail)
@@ -46,8 +50,22 @@ func NewRouter(h *Handlers, staticDir string) http.Handler {
 	mux.HandleFunc("POST /circles/{id}/members", h.CircleMemberCreate)
 	mux.HandleFunc("DELETE /circles/{id}/members/{personID}", h.CircleMemberDelete)
 
-	mux.HandleFunc("GET /events", h.Events)
-	mux.HandleFunc("GET /reminders", h.Reminders)
+	mux.HandleFunc("GET /events", h.EventsList)
+	mux.HandleFunc("POST /events", h.EventCreate)
+	mux.HandleFunc("GET /events/{id}", h.EventDetail)
+	mux.HandleFunc("PUT /events/{id}", h.EventUpdate)
+	mux.HandleFunc("DELETE /events/{id}", h.EventDelete)
+	mux.HandleFunc("GET /events/{id}/edit", h.EventEdit)
+	mux.HandleFunc("GET /events/{id}/header", h.EventHeaderView)
+
+	mux.HandleFunc("POST /events/{id}/participants", h.EventParticipantCreate)
+	mux.HandleFunc("DELETE /events/{id}/participants/{personID}", h.EventParticipantDelete)
+
+	mux.HandleFunc("GET /reminders", h.RemindersList)
+	mux.HandleFunc("POST /reminders", h.ReminderCreate)
+	mux.HandleFunc("DELETE /reminders/{id}", h.ReminderDelete)
+	mux.HandleFunc("POST /reminders/{id}/complete", h.ReminderComplete)
+
 	mux.HandleFunc("GET /notes", h.Notes)
 
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))

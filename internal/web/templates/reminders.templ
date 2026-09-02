@@ -1,0 +1,95 @@
+package templates
+
+import (
+	"rolodex/internal/model"
+)
+
+templ RemindersList(reminders []model.Reminder, people []model.Person, events []model.Event) {
+	@Layout("reminders", "Personal CRM", "Reminders", "Nudges you set for yourself, not the people you love.") {
+		<form
+			class="inline-form"
+			hx-post="/reminders"
+			hx-target={ "#" + reminderSectionsID }
+			hx-swap="outerHTML"
+			hx-on::after-request="if(event.detail.successful) this.reset()"
+		>
+			<input type="text" name="note" placeholder="Remind me to..." required style="flex:1;"/>
+			<input type="date" name="due_date" required/>
+			<input type="number" name="recurrence_interval" placeholder="Every" min="1" style="width:70px;"/>
+			<select name="recurrence_unit">
+				<option value="">(one-off)</option>
+				<option value="days">days</option>
+				<option value="weeks">weeks</option>
+				<option value="months">months</option>
+			</select>
+			<select name="person_id">
+				<option value="">No person</option>
+				for _, p := range people {
+					<option value={ idStr(p.ID) }>{ p.FullName() }</option>
+				}
+			</select>
+			<select name="event_id">
+				<option value="">No event</option>
+				for _, e := range events {
+					<option value={ idStr(e.ID) }>{ eventLabel(e) }</option>
+				}
+			</select>
+			<button class="btn btn-primary" type="submit">+ Add reminder</button>
+		</form>
+		@ReminderSections(reminders)
+	}
+}
+
+templ ReminderSections(reminders []model.Reminder) {
+	<div id={ reminderSectionsID }>
+		@ReminderSection("Pending", filterRemindersByStatus(reminders, false), true)
+		@ReminderSection("Done", filterRemindersByStatus(reminders, true), false)
+		if len(reminders) == 0 {
+			<div class="panel muted">No reminders yet — add one above.</div>
+		}
+	</div>
+}
+
+templ ReminderSection(title string, reminders []model.Reminder, showComplete bool) {
+	if len(reminders) > 0 {
+		<div class="panel">
+			<div class="section-title">{ title } ({ idStr(int64(len(reminders))) })</div>
+			for _, r := range reminders {
+				<div class="list-row">
+					<span style="flex:1;">
+						{ r.Note }
+						if r.PersonName != "" {
+							<span class="muted"> · { r.PersonName }</span>
+						}
+						if r.EventTitle != "" {
+							<span class="muted"> · { r.EventTitle }</span>
+						}
+					</span>
+					if r.Recurring() {
+						<span class="tag">recurring</span>
+					}
+					<span class="muted" style="width:100px;">{ r.DueDate }</span>
+					if showComplete {
+						<button
+							class="btn"
+							hx-post={ reminderCompleteURL(r.ID) }
+							hx-target={ "#" + reminderSectionsID }
+							hx-swap="outerHTML"
+						>
+							Mark done
+						</button>
+					}
+					<button
+						class="btn"
+						hx-delete={ reminderDeleteURL(r.ID) }
+						hx-target={ "#" + reminderSectionsID }
+						hx-swap="outerHTML"
+						hx-confirm="Delete this reminder?"
+					>
+						Delete
+					</button>
+				</div>
+			}
+		</div>
+	}
+}
