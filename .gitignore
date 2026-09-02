@@ -2,3 +2,12 @@
 *.db
 *.db-journal
 .DS_Store
+
+# defensive — nothing in this repo currently needs these, but cheap insurance
+# against ever accidentally committing local secrets or IDE state
+.env
+*.pem
+*.key
+.idea/
+.vscode/
+*.log

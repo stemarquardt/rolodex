@@ -15,7 +15,7 @@ Monica's better data-model ideas where they fit.
 - **Server-rendered HTML** (`html/template` or `templ`) + **htmx** for interactivity — no separate
   TS/React frontend
 - **`go:embed`** to bundle templates/assets into a single binary
-- Runs as a service on the home Precision server, reachable over Tailscale. No public internet
+- Runs as a service on the home server, reachable over Tailscale. No public internet
   exposure planned, so **no auth for v1** (network boundary is the perimeter). Basic auth could be
   added later as a cheap second layer if ever needed.
 
@@ -224,7 +224,7 @@ tables) + db layer (`internal/db`), model/Store layer (`internal/model`), templ+
 (`internal/web`), Dockerized (multi-stage build, `docker-compose.yml`, volume-mounted SQLite file).
 First working vertical slice — People (list, search, add, detail) — is fully wired end to end and
 verified locally via `docker compose up --build`; Today/Circles/Events/Reminders/Notes are stub
-pages with real nav entries. Not yet deployed to the Precision server (local verification only).
+pages with real nav entries. Not yet deployed to the home server (local verification only).
 
 People is now a complete create/edit/delete experience: core fields are editable in place, and
 every sub-collection (contact info, important dates, relationships, circles, pets, facts, notes)
@@ -299,7 +299,7 @@ manually end-to-end (dry-run preview, real import, re-run no-op, browsed the imp
 the UI). Must be run with the docker compose server stopped (or before starting it) — SQLite is
 single-writer and `internal/db.Open` caps the pool at 1 connection.
 
-Next: deploy to the Precision server via `docker compose up -d --build` over Tailscale — the only
+Next: deploy to the home server via `docker compose up -d --build` over Tailscale — the only
 remaining item from the original MVP scope. The user's own Google Contacts export hasn't been run
 through `cmd/import` yet in this environment (that's a local, personal-data operation for them to
 do on their machine) — worth checking in on before/around deploy.

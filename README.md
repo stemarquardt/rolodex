@@ -140,3 +140,7 @@ on the target machine, with `./data` persisted somewhere durable.
 People, Circles, Visits & Events, Reminders, and the Today page are all built and working. Still
 open: a JSON export for backups (planned, not built yet) and actually deploying this to a real
 server. `PLANNING.md` has the current, more detailed status.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
