@@ -1,5 +1,7 @@
 # Rolodex
 
+![Rolodex](Rolodex.png)
+
 > "Green means go, so I know to go ahead and shut up about it." — Michael Scott
 
 A personal CRM for keeping track of the people in my life — birthdays, who's in which circle of
