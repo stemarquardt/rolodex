@@ -58,8 +58,14 @@ thing is built around.
 docker compose up --build
 ```
 
-Then visit `http://localhost:8080`. Data lives in `./data/people.db`, created automatically on
+Then visit `http://localhost:8090`. Data lives in `./data/people.db`, created automatically on
 first run and persisted across restarts via a volume mount.
+
+Port `8090` is just the default published port, picked to avoid clashing with other local dev
+servers that tend to grab `8080`. Override it by setting `ROLODEX_PORT` — either inline
+(`ROLODEX_PORT=9000 docker compose up -d`) or in a `.env` file next to `docker-compose.yml`
+(gitignored, so it stays local to your machine). The app itself still listens on `8080` inside the
+container regardless; only the host-side port changes.
 
 ### Locally, without Docker
 
@@ -69,8 +75,9 @@ Needs Go 1.25 or newer.
 go run ./cmd/server
 ```
 
-Defaults to `./data/people.db` and port `:8080`, same as the Docker image. Override with the
-`DB_PATH`, `STATIC_DIR`, and `ADDR` environment variables if you want something different.
+Defaults to `./data/people.db` and port `:8080` (this path bypasses Docker entirely, so the
+`ROLODEX_PORT` override above doesn't apply here — use `ADDR` instead, see below). Override with
+the `DB_PATH`, `STATIC_DIR`, and `ADDR` environment variables if you want something different.
 
 If you edit any `.templ` file, regenerate the Go code it produces before building:
 
