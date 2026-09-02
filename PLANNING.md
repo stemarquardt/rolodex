@@ -345,6 +345,19 @@ edit-form selects handle the case where a row's current value isn't in the manag
 since, or a pre-existing odd value) by adding it as a one-off preserved `<option>` rather than
 silently changing it on next save.
 
+The default `option_values` (Visit/Trip/Gathering, Idea/Tentative/.../Cancelled, Mobile/Email/...,
+Birthday/Anniversary/Custom) are now capitalized rather than lowercase. `internal/db/seed.go` gained
+`renameLegacyOptionValues`, run unconditionally on every `db.Open` (unlike the seed inserts, which
+only fire against an empty table) — it renames an exact match against the old lowercase defaults to
+the new capitalized form, so an already-deployed database (like the home server's) picks up the fix
+on next restart with no manual migration step. Custom values a user added themselves are untouched
+(only exact matches against the specific old default strings get renamed). Note this only fixes the
+*managed list* — People/Event/etc. rows that already stored a lowercase value (e.g. an event saved
+with `status = "tentative"` before this change) keep displaying that lowercase value verbatim on
+their tag until that record is edited and saved again, at which point `EventHeaderEdit`'s
+case-insensitive select match picks the capitalized canonical option and writes that back — a
+gradual, non-destructive migration path rather than a bulk rewrite of existing data.
+
 Next: nothing left from the original MVP scope — the app is deployed and in use. Future work is
 whatever surfaces from actually using it day to day (this session's Events-status and dropdown
 fixes both came from exactly that).

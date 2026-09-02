@@ -38,8 +38,8 @@ func TestOptionValueCaseInsensitiveDuplicateRejected(t *testing.T) {
 	ctx := context.Background()
 	s := newTestStore(t)
 
-	if _, err := s.CreateOptionValue(ctx, CategoryContactInfoType, "Mobile"); err == nil {
-		t.Fatalf("expected case-insensitive duplicate of seeded 'mobile' to be rejected")
+	if _, err := s.CreateOptionValue(ctx, CategoryContactInfoType, "mobile"); err == nil {
+		t.Fatalf("expected case-insensitive duplicate of seeded 'Mobile' to be rejected")
 	}
 }
 
@@ -76,7 +76,7 @@ func TestListAllOptionValues(t *testing.T) {
 			t.Fatalf("expected seeded values for category %q, got %+v", cat, all)
 		}
 	}
-	if len(all[CategoryEventStatus]) != 5 || all[CategoryEventStatus][0].Value != "idea" || all[CategoryEventStatus][4].Value != "cancelled" {
-		t.Fatalf("expected event_status seed order idea..cancelled, got %+v", all[CategoryEventStatus])
+	if len(all[CategoryEventStatus]) != 5 || all[CategoryEventStatus][0].Value != "Idea" || all[CategoryEventStatus][4].Value != "Cancelled" {
+		t.Fatalf("expected event_status seed order Idea..Cancelled, got %+v", all[CategoryEventStatus])
 	}
 }
