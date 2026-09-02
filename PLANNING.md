@@ -320,7 +320,31 @@ subfolder per Google Contacts Label (plus device-sync sources), not a single fla
 - `.gitignore` now excludes `/Contacts/`, `/Takeout/`, and `*.vcf` — a real Takeout export sitting
   in the repo working directory during testing must never be tracked.
 
-Next: deploy to the home server via `docker compose up -d --build` over Tailscale — the only
-remaining item from the original MVP scope. The user is now re-running `cmd/import` against their
-real export with the fixes above; once that looks right, the resulting `data/people.db` is what
-gets copied to the home server as the initial seed.
+The importer is deployed and working against the user's real data; the Precision server is running
+the app over the LAN (rebranded from "Personal CRM" to "Rolodex" in the sidebar/tab title/
+breadcrumbs, with the `rolodex_mini.png` icon, and Docker's published port defaults to `8090` now,
+overridable via `ROLODEX_PORT`, to avoid clashing with other local dev servers on `8080`). Also
+fixed along the way: events with a differently-cased status (e.g. `Tentative` typed via the edit
+form) were silently disappearing from `/events` and from Today's "Visits needing attention" —
+both used exact-case string matching against a free-text column. Fixed to case-insensitive matching
+throughout, plus a catch-all "Other" status group on the Events page so no status value can ever
+make an event vanish from the list again, regardless of what ends up stored.
+
+**Managed option lists + Settings page.** The four fields that used to be
+`<input list="..."><datalist>` (Event kind/status, ContactInfo/ImportantDate type) rendered as
+Chrome's native autofill-style popup, which isn't stylable and read as "not a real dropdown."
+Replaced with actual `<select>` elements backed by a new `option_values` table
+(`internal/model/optionvalue.go`, seeded in `internal/db/seed.go`) and a `/settings` page to
+add/remove each category's values — the same admin-managed-lookup-table shape `RelationshipType`
+already used, generalized to a single shared table since these four have no extra columns. Circle
+name stays free text (it's how a brand-new Circle gets created inline via
+`GetOrCreateCircleByName`, which a fixed `<select>` can't do). `option_values` is deliberately not a
+foreign key from `events`/`contact_info`/`important_dates` — deleting a managed option only removes
+it from the dropdown going forward, it doesn't touch rows that already used it. `EventHeaderEdit`'s
+edit-form selects handle the case where a row's current value isn't in the managed list (deleted
+since, or a pre-existing odd value) by adding it as a one-off preserved `<option>` rather than
+silently changing it on next save.
+
+Next: nothing left from the original MVP scope — the app is deployed and in use. Future work is
+whatever surfaces from actually using it day to day (this session's Events-status and dropdown
+fixes both came from exactly that).

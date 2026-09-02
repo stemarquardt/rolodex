@@ -1,10 +1,12 @@
 package templates
 
 import (
+	"strings"
+
 	"rolodex/internal/model"
 )
 
-templ EventsList(events []model.Event) {
+templ EventsList(events []model.Event, kindOptions, statusOptions []model.OptionValue) {
 	@Layout("events", "Rolodex", "Visits & events", "Keep the good intentions somewhere gentle.") {
 		<form
 			class="inline-form"
@@ -13,18 +15,16 @@ templ EventsList(events []model.Event) {
 			hx-swap="outerHTML"
 			hx-on::after-request="if(event.detail.successful) this.reset()"
 		>
-			<input list="event-kinds" type="text" name="kind" placeholder="Kind (visit, trip...)" required/>
-			<datalist id="event-kinds">
-				<option value="visit"></option>
-				<option value="trip"></option>
-				<option value="gathering"></option>
-			</datalist>
-			<input list="event-statuses" type="text" name="status" placeholder="Status (idea, tentative...)"/>
-			<datalist id="event-statuses">
-				<option value="idea"></option>
-				<option value="tentative"></option>
-				<option value="confirmed"></option>
-			</datalist>
+			<select name="kind" required>
+				for _, o := range kindOptions {
+					<option value={ o.Value }>{ o.Value }</option>
+				}
+			</select>
+			<select name="status">
+				for _, o := range statusOptions {
+					<option value={ o.Value }>{ o.Value }</option>
+				}
+			</select>
 			<input type="text" name="title" placeholder="Title (optional)"/>
 			<input type="date" name="start_date"/>
 			<input type="text" name="timeframe_note" placeholder="Timeframe (e.g. maybe this fall)"/>
@@ -103,24 +103,26 @@ templ EventHeader(e model.Event) {
 	</div>
 }
 
-templ EventHeaderEdit(e model.Event) {
+templ EventHeaderEdit(e model.Event, kindOptions, statusOptions []model.OptionValue) {
 	<div class="panel" id={ eventHeaderID(e.ID) }>
 		<form hx-put={ eventURL(e.ID) } hx-target={ "#" + eventHeaderID(e.ID) } hx-swap="outerHTML">
 			<div class="inline-form">
-				<input list="event-kinds" type="text" name="kind" placeholder="Kind" value={ e.Kind } required/>
-				<datalist id="event-kinds">
-					<option value="visit"></option>
-					<option value="trip"></option>
-					<option value="gathering"></option>
-				</datalist>
-				<input list="event-statuses" type="text" name="status" placeholder="Status" value={ e.Status } required/>
-				<datalist id="event-statuses">
-					<option value="idea"></option>
-					<option value="tentative"></option>
-					<option value="confirmed"></option>
-					<option value="done"></option>
-					<option value="cancelled"></option>
-				</datalist>
+				<select name="kind" required>
+					for _, o := range kindOptions {
+						<option value={ o.Value } selected?={ strings.EqualFold(o.Value, e.Kind) }>{ o.Value }</option>
+					}
+					if !containsOptionValue(kindOptions, e.Kind) {
+						<option value={ e.Kind } selected>{ e.Kind }</option>
+					}
+				</select>
+				<select name="status" required>
+					for _, o := range statusOptions {
+						<option value={ o.Value } selected?={ strings.EqualFold(o.Value, e.Status) }>{ o.Value }</option>
+					}
+					if !containsOptionValue(statusOptions, e.Status) {
+						<option value={ e.Status } selected>{ e.Status }</option>
+					}
+				</select>
 				<input type="text" name="title" placeholder="Title (optional)" value={ e.Title }/>
 			</div>
 			<div class="inline-form">

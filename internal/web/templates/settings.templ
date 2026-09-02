@@ -1,0 +1,67 @@
+package templates
+
+import (
+	"rolodex/internal/model"
+)
+
+// settingsCategories drives both the Settings page layout and which
+// category each add-form posts to. Keep in sync with the category
+// constants in internal/model/optionvalue.go and the seed list in
+// internal/db/seed.go.
+var settingsCategories = []struct {
+	Category string
+	Title    string
+}{
+	{model.CategoryEventKind, "Event kinds"},
+	{model.CategoryEventStatus, "Event statuses"},
+	{model.CategoryContactInfoType, "Contact info types"},
+	{model.CategoryImportantDateType, "Important date types"},
+}
+
+templ SettingsPage(options map[string][]model.OptionValue) {
+	@Layout("settings", "Rolodex", "Settings", "Manage the option lists behind the dropdowns elsewhere in the app.") {
+		@SettingsOptionsBody(options)
+	}
+}
+
+templ SettingsOptionsBody(options map[string][]model.OptionValue) {
+	<div id={ settingsOptionsBodyID }>
+		for _, cat := range settingsCategories {
+			@SettingsCategoryPanel(cat.Category, cat.Title, options[cat.Category])
+		}
+	</div>
+}
+
+templ SettingsCategoryPanel(category, title string, items []model.OptionValue) {
+	<div class="panel">
+		<div class="section-title">{ title }</div>
+		if len(items) == 0 {
+			<div class="muted">No values yet.</div>
+		}
+		for _, v := range items {
+			<div class="list-row">
+				<span style="flex:1;">{ v.Value }</span>
+				<button
+					class="btn"
+					hx-delete={ settingsOptionDeleteURL(v.ID) }
+					hx-target={ "#" + settingsOptionsBodyID }
+					hx-swap="outerHTML"
+					hx-confirm="Remove this option? Existing records that already used it keep it, but it won't show up as a choice anymore."
+				>
+					Remove
+				</button>
+			</div>
+		}
+		<form
+			class="inline-form"
+			hx-post={ settingsOptionCreateURL() }
+			hx-target={ "#" + settingsOptionsBodyID }
+			hx-swap="outerHTML"
+			hx-on::after-request="if(event.detail.successful) this.reset()"
+		>
+			<input type="hidden" name="category" value={ category }/>
+			<input type="text" name="value" placeholder="Add a value..." required/>
+			<button class="btn" type="submit">+ Add</button>
+		</form>
+	</div>
+}

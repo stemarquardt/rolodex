@@ -250,3 +250,21 @@ func personReminderDeleteURL(personID, id int64) string {
 func personReminderCompleteURL(personID, id int64) string {
 	return fmt.Sprintf("/people/%d/reminders/%d/complete", personID, id)
 }
+
+const settingsOptionsBodyID = "settings-options-body"
+
+func settingsOptionCreateURL() string         { return "/settings/options" }
+func settingsOptionDeleteURL(id int64) string { return fmt.Sprintf("/settings/options/%d", id) }
+
+// containsOptionValue reports whether value matches one of options
+// (case-insensitive — these back free-text-originated columns like
+// Event.Status, so a pre-existing row's value might differ only in case
+// from the managed list).
+func containsOptionValue(options []model.OptionValue, value string) bool {
+	for _, o := range options {
+		if strings.EqualFold(o.Value, value) {
+			return true
+		}
+	}
+	return false
+}

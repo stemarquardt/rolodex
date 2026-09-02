@@ -1,6 +1,7 @@
 package web
 
 import (
+	"context"
 	"database/sql"
 	"net/http"
 	"strings"
@@ -38,7 +39,26 @@ func (h *Handlers) EventsList(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	templates.EventsList(events).Render(r.Context(), w)
+	kindOptions, statusOptions, err := h.eventOptionValues(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	templates.EventsList(events, kindOptions, statusOptions).Render(r.Context(), w)
+}
+
+// eventOptionValues loads the managed Event kind/status <select> option
+// lists.
+func (h *Handlers) eventOptionValues(ctx context.Context) (kinds, statuses []model.OptionValue, err error) {
+	kinds, err = h.store.ListOptionValues(ctx, model.CategoryEventKind)
+	if err != nil {
+		return nil, nil, err
+	}
+	statuses, err = h.store.ListOptionValues(ctx, model.CategoryEventStatus)
+	if err != nil {
+		return nil, nil, err
+	}
+	return kinds, statuses, nil
 }
 
 func (h *Handlers) EventCreate(w http.ResponseWriter, r *http.Request) {
@@ -135,7 +155,12 @@ func (h *Handlers) EventEdit(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	templates.EventHeaderEdit(*e).Render(r.Context(), w)
+	kindOptions, statusOptions, err := h.eventOptionValues(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	templates.EventHeaderEdit(*e, kindOptions, statusOptions).Render(r.Context(), w)
 }
 
 func (h *Handlers) EventUpdate(w http.ResponseWriter, r *http.Request) {

@@ -4,12 +4,12 @@ import (
 	"rolodex/internal/model"
 )
 
-templ PersonDetail(detail *model.PersonDetail, otherPeople []model.Person, circles []model.Circle, relTypes []model.RelationshipType) {
+templ PersonDetail(detail *model.PersonDetail, otherPeople []model.Person, circles []model.Circle, relTypes []model.RelationshipType, contactInfoTypes, importantDateTypes []model.OptionValue) {
 	@Layout("people", "People / Profile", detail.FullName(), "") {
 		@PersonHeader(detail.Person)
 
-		@ContactInfoSection(detail.ID, detail.ContactInfo)
-		@ImportantDatesSection(detail.ID, detail.ImportantDates)
+		@ContactInfoSection(detail.ID, detail.ContactInfo, contactInfoTypes)
+		@ImportantDatesSection(detail.ID, detail.ImportantDates, importantDateTypes)
 		@RelationshipsSection(detail.ID, detail.Relationships, otherPeople, relTypes)
 		@CirclesSection(detail.ID, detail.CircleMemberships, circles)
 		@PetsSection(detail.ID, detail.Pets)
@@ -81,7 +81,7 @@ templ PersonHeaderEdit(p model.Person) {
 	</div>
 }
 
-templ ContactInfoSection(personID int64, items []model.ContactInfo) {
+templ ContactInfoSection(personID int64, items []model.ContactInfo, typeOptions []model.OptionValue) {
 	<div class="panel">
 		<div class="section-title">Contact information</div>
 		@ContactInfoList(personID, items)
@@ -92,13 +92,11 @@ templ ContactInfoSection(personID int64, items []model.ContactInfo) {
 			hx-swap="outerHTML"
 			hx-on::after-request="if(event.detail.successful) this.reset()"
 		>
-			<input list="contact-info-types" type="text" name="type" placeholder="Type (mobile, email...)" required/>
-			<datalist id="contact-info-types">
-				<option value="mobile"></option>
-				<option value="email"></option>
-				<option value="address"></option>
-				<option value="social"></option>
-			</datalist>
+			<select name="type" required>
+				for _, o := range typeOptions {
+					<option value={ o.Value }>{ o.Value }</option>
+				}
+			</select>
 			<input type="text" name="value" placeholder="Value" required/>
 			<button class="btn" type="submit">+ Add</button>
 		</form>
@@ -128,7 +126,7 @@ templ ContactInfoList(personID int64, items []model.ContactInfo) {
 	</div>
 }
 
-templ ImportantDatesSection(personID int64, items []model.ImportantDate) {
+templ ImportantDatesSection(personID int64, items []model.ImportantDate, typeOptions []model.OptionValue) {
 	<div class="panel">
 		<div class="section-title">Important dates</div>
 		@ImportantDatesList(personID, items)
@@ -139,12 +137,11 @@ templ ImportantDatesSection(personID int64, items []model.ImportantDate) {
 			hx-swap="outerHTML"
 			hx-on::after-request="if(event.detail.successful) this.reset()"
 		>
-			<input list="important-date-types" type="text" name="type" placeholder="Type (birthday...)" required/>
-			<datalist id="important-date-types">
-				<option value="birthday"></option>
-				<option value="anniversary"></option>
-				<option value="custom"></option>
-			</datalist>
+			<select name="type" required>
+				for _, o := range typeOptions {
+					<option value={ o.Value }>{ o.Value }</option>
+				}
+			</select>
 			<input type="text" name="label" placeholder="Label" required/>
 			<input type="number" name="month" placeholder="Month" min="1" max="12" required style="width:80px;"/>
 			<input type="number" name="day" placeholder="Day" min="1" max="31" required style="width:70px;"/>

@@ -86,8 +86,18 @@ func (h *Handlers) PersonDetail(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	contactInfoTypes, err := h.store.ListOptionValues(r.Context(), model.CategoryContactInfoType)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	importantDateTypes, err := h.store.ListOptionValues(r.Context(), model.CategoryImportantDateType)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-	templates.PersonDetail(detail, otherPeople, circles, relTypes).Render(r.Context(), w)
+	templates.PersonDetail(detail, otherPeople, circles, relTypes, contactInfoTypes, importantDateTypes).Render(r.Context(), w)
 }
 
 func (h *Handlers) PersonHeaderView(w http.ResponseWriter, r *http.Request) {

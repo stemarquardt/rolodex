@@ -112,3 +112,15 @@ CREATE TABLE IF NOT EXISTS facts (
     value TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_facts_person ON facts(person_id);
+
+-- Managed suggestion lists for otherwise-free-text fields (Event kind/status,
+-- ContactInfo/ImportantDate type). Deliberately not a foreign key from those
+-- tables — deleting an option here must not affect rows that already used
+-- it; see internal/model/optionvalue.go.
+CREATE TABLE IF NOT EXISTS option_values (
+    id INTEGER PRIMARY KEY,
+    category TEXT NOT NULL,
+    value TEXT NOT NULL,
+    UNIQUE (category, value COLLATE NOCASE)
+);
+CREATE INDEX IF NOT EXISTS idx_option_values_category ON option_values(category);

@@ -66,6 +66,10 @@ func NewRouter(h *Handlers, staticDir string) http.Handler {
 	mux.HandleFunc("DELETE /reminders/{id}", h.ReminderDelete)
 	mux.HandleFunc("POST /reminders/{id}/complete", h.ReminderComplete)
 
+	mux.HandleFunc("GET /settings", h.SettingsPage)
+	mux.HandleFunc("POST /settings/options", h.SettingsOptionCreate)
+	mux.HandleFunc("DELETE /settings/options/{id}", h.SettingsOptionDelete)
+
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
 
 	return mux
