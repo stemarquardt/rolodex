@@ -1,5 +1,7 @@
 # Rolodex
 
+> "Green means go, so I know to go ahead and shut up about it." — Michael Scott
+
 A personal CRM for keeping track of the people in my life — birthdays, who's in which circle of
 friends, when I last talked to someone, half-formed plans to see people, and the small details
 worth remembering about them.
