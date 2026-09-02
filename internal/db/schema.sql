@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS people (
     last_name TEXT NOT NULL DEFAULT '',
     nickname TEXT NOT NULL DEFAULT '',
     location TEXT NOT NULL DEFAULT '',
-    nudge_enabled INTEGER NOT NULL DEFAULT 1,
+    nudge_enabled INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -124,3 +124,15 @@ CREATE TABLE IF NOT EXISTS option_values (
     UNIQUE (category, value COLLATE NOCASE)
 );
 CREATE INDEX IF NOT EXISTS idx_option_values_category ON option_values(category);
+
+-- Tracks one-time data migrations (as opposed to schema changes, which the
+-- CREATE TABLE IF NOT EXISTS statements above handle) so each runs exactly
+-- once ever, even across restarts — see internal/db/seed.go's
+-- applyOneTimeMigrations. Unlike seedOptionValues/renameLegacyOptionValues,
+-- some migrations aren't safely re-runnable by content alone (e.g. "disable
+-- a flag for everyone" can't tell "never migrated" apart from "user turned
+-- it back on since"), so they need an explicit applied-once marker instead.
+CREATE TABLE IF NOT EXISTS schema_migrations (
+    name TEXT PRIMARY KEY,
+    applied_at TEXT NOT NULL DEFAULT (datetime('now'))
+);

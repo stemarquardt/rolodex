@@ -358,6 +358,36 @@ their tag until that record is edited and saved again, at which point `EventHead
 case-insensitive select match picks the capitalized canonical option and writes that back — a
 gradual, non-destructive migration path rather than a bulk rewrite of existing data.
 
+Two more day-to-day polish fixes: the Important Date `label` field is now optional, defaulting to
+the type when left blank (typing "Birthday" right after picking "Birthday" from the type dropdown
+was pure friction — label still matters for telling apart multiple same-type dates, or naming what
+a "Custom" date actually is); and the month field on that same form is now a name dropdown
+(January..December) instead of a bare 1-12 number input, matching how the date already displays
+once saved.
+
+**`nudge_enabled` flipped from opt-out to opt-in.** With a large bulk-imported contact list, an
+opt-out default made Today's "People going quiet" show almost the entire People list, which
+defeats its purpose as a nudge — the signal only means something for people you've deliberately
+chosen to track. `internal/db/schema.sql`'s default changed to 0, `Store.CreatePerson`
+(`internal/model/person.go`) now explicitly writes `NudgeEnabled` into the INSERT instead of
+silently relying on the SQL default regardless of what the caller passed (a latent bug — the field
+was previously ignored on create), and the importer no longer opts imported contacts in.
+
+Existing data needed a real one-time migration, not just a new default — added
+`schema_migrations` (`internal/db/schema.sql`) plus `applyOneTimeMigrations`
+(`internal/db/seed.go`), a general mechanism for migrations that (unlike
+`renameLegacyOptionValues`) aren't safely re-runnable by content-matching alone. The nudge flip is
+registered there: clears `nudge_enabled` for every existing person, runs exactly once ever via the
+tracking table, so manually re-opting someone in later survives future restarts instead of being
+silently reset by a re-run. Verified manually by simulating the home server's actual pre-migration
+state (existing people with `nudge_enabled=1`, no migration row) and confirming a restart both
+fixes them and — critically — leaves a subsequently re-enabled person alone on the *next* restart.
+
 Next: nothing left from the original MVP scope — the app is deployed and in use. Future work is
-whatever surfaces from actually using it day to day (this session's Events-status and dropdown
-fixes both came from exactly that).
+whatever surfaces from actually using it day to day (this session's Events-status, dropdown, and
+nudge-default fixes all came from exactly that). Noted but not yet acted on: Relationship types
+have no add/remove UI (the one lookup-table-style field Settings doesn't cover), the top-bar search
+box on every page is decorative/non-functional, Circle name still has the same "looks like Chrome
+autofill" datalist UI the Settings work moved everything else away from (kept deliberately — it's
+how a brand-new Circle gets created inline), and Notes/Event-notes are single-line inputs rather
+than a textarea.

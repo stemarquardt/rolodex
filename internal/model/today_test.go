@@ -125,13 +125,13 @@ func TestListStalePeople(t *testing.T) {
 	ctx := context.Background()
 	s := newTestStore(t)
 
-	neverContacted, _ := s.CreatePerson(ctx, Person{FirstName: "Never"})
-	recentlyContacted, _ := s.CreatePerson(ctx, Person{FirstName: "Recent"})
-	longQuiet, _ := s.CreatePerson(ctx, Person{FirstName: "Quiet"})
+	neverContacted, _ := s.CreatePerson(ctx, Person{FirstName: "Never", NudgeEnabled: true})
+	recentlyContacted, _ := s.CreatePerson(ctx, Person{FirstName: "Recent", NudgeEnabled: true})
+	longQuiet, _ := s.CreatePerson(ctx, Person{FirstName: "Quiet", NudgeEnabled: true})
+	// nudge_enabled now defaults to false (opt-in) — this person is left at
+	// that default rather than explicitly opted out, to also cover the
+	// default-excludes-you-from-staleness-checks path.
 	nudgeOff, _ := s.CreatePerson(ctx, Person{FirstName: "Opted out"})
-	if err := s.UpdatePerson(ctx, Person{ID: nudgeOff, FirstName: "Opted out", NudgeEnabled: false}); err != nil {
-		t.Fatalf("UpdatePerson: %v", err)
-	}
 
 	if _, err := s.CreateNote(ctx, recentlyContacted, "just talked"); err != nil {
 		t.Fatalf("CreateNote: %v", err)

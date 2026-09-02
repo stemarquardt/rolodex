@@ -106,11 +106,16 @@ func (s *Store) ListPeople(ctx context.Context, search string) ([]Person, error)
 	return people, nil
 }
 
-// CreatePerson inserts a new person and returns their id.
+// CreatePerson inserts a new person and returns their id. NudgeEnabled
+// defaults to false (opt-in) unless the caller explicitly sets it.
 func (s *Store) CreatePerson(ctx context.Context, p Person) (int64, error) {
+	nudge := 0
+	if p.NudgeEnabled {
+		nudge = 1
+	}
 	res, err := s.db.ExecContext(ctx, `
-		INSERT INTO people (first_name, last_name, nickname, location) VALUES (?, ?, ?, ?)
-	`, p.FirstName, p.LastName, p.Nickname, p.Location)
+		INSERT INTO people (first_name, last_name, nickname, location, nudge_enabled) VALUES (?, ?, ?, ?, ?)
+	`, p.FirstName, p.LastName, p.Nickname, p.Location, nudge)
 	if err != nil {
 		return 0, fmt.Errorf("create person: %w", err)
 	}

@@ -152,7 +152,9 @@ var googleSystemCategories = map[string]bool{
 }
 
 func createPersonFromCard(ctx context.Context, store *model.Store, card vcard.Card, first, last string) (int64, error) {
-	p := model.Person{FirstName: first, LastName: last, NudgeEnabled: true}
+	// NudgeEnabled left at its zero value (false) — check-in nudges are
+	// opt-in, so a bulk import shouldn't flip everyone on by default.
+	p := model.Person{FirstName: first, LastName: last}
 	if addr := card.Address(); addr != nil {
 		p.Location = strings.TrimSpace(strings.Join(nonEmpty(addr.Locality, addr.Region), ", "))
 	}

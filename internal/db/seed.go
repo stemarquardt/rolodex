@@ -40,7 +40,7 @@ var legacyOptionValueRenames = map[string]map[string]string{
 }
 
 // seed inserts default lookup data on first run, and applies small one-time
-// renames to already-seeded data. Safe to call on every startup.
+// renames/migrations to already-seeded data. Safe to call on every startup.
 func seed(sqlDB *sql.DB) error {
 	if err := seedRelationshipTypes(sqlDB); err != nil {
 		return err
@@ -48,7 +48,10 @@ func seed(sqlDB *sql.DB) error {
 	if err := seedOptionValues(sqlDB); err != nil {
 		return err
 	}
-	return renameLegacyOptionValues(sqlDB)
+	if err := renameLegacyOptionValues(sqlDB); err != nil {
+		return err
+	}
+	return applyOneTimeMigrations(sqlDB)
 }
 
 func seedRelationshipTypes(sqlDB *sql.DB) error {
@@ -129,4 +132,52 @@ func renameLegacyOptionValues(sqlDB *sql.DB) error {
 	}
 
 	return tx.Commit()
+}
+
+// oneTimeMigrations are data changes that must run exactly once ever, not
+// on every startup and not re-triggered by content matching — see
+// schema_migrations in internal/db/schema.sql.
+var oneTimeMigrations = []struct {
+	name  string
+	apply string
+}{
+	{
+		name: "2026-09_nudge_enabled_opt_in_by_default",
+		// Check-in nudges flipped from opt-out to opt-in — everyone
+		// existing at the time gets cleared to match the new default
+		// (false), rather than staying enabled from the old default. See
+		// PLANNING.md for why: with a large bulk-imported contact list, an
+		// opt-out default made "People going quiet" show almost everyone,
+		// which defeats its purpose.
+		apply: "UPDATE people SET nudge_enabled = 0",
+	},
+}
+
+func applyOneTimeMigrations(sqlDB *sql.DB) error {
+	for _, m := range oneTimeMigrations {
+		var applied int
+		if err := sqlDB.QueryRow("SELECT COUNT(*) FROM schema_migrations WHERE name = ?", m.name).Scan(&applied); err != nil {
+			return err
+		}
+		if applied > 0 {
+			continue
+		}
+
+		tx, err := sqlDB.Begin()
+		if err != nil {
+			return err
+		}
+		if _, err := tx.Exec(m.apply); err != nil {
+			tx.Rollback()
+			return err
+		}
+		if _, err := tx.Exec("INSERT INTO schema_migrations (name) VALUES (?)", m.name); err != nil {
+			tx.Rollback()
+			return err
+		}
+		if err := tx.Commit(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
