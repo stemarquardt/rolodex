@@ -112,6 +112,7 @@ func noteCreateURL(personID int64) string { return fmt.Sprintf("/people/%d/notes
 func noteDeleteURL(personID, id int64) string {
 	return fmt.Sprintf("/people/%d/notes/%d", personID, id)
 }
+func personCheckInURL(personID int64) string { return fmt.Sprintf("/people/%d/check-in", personID) }
 
 func idStr(id int64) string { return fmt.Sprintf("%d", id) }
 

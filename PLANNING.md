@@ -408,6 +408,19 @@ Cleared most of the rough-edge backlog noted above:
 Circle name's datalist UI is the one item from that list intentionally left alone — already decided
 as a kept tradeoff (free-text is how a brand-new Circle gets created inline), not a bug.
 
+Added a "Mark as caught up" button to the person profile header (`internal/web/personnote.go`'s
+`PersonCheckIn`) — logs a fixed "Checked in" `Note` with no user input required, a low-friction way
+to reset the staleness clock (still purely `MAX(Note.created_at)`-driven, see `ListStalePeople`)
+for contact you had but don't have anything specific to write down. Deliberately *not* a separate
+"last contacted" field or a broadened definition of "contact" that includes any field edit — the
+latter was considered and rejected: editing a record (e.g. correcting a phone number a mutual
+friend mentioned) isn't the same signal as actually seeing someone, and would produce false
+staleness resets during routine data cleanup. The button's `hx-target` points at the Notes list
+(not the header it lives in) so the new entry is immediately visible as confirmation something
+happened. Verified manually: a nudge-enabled person showing in Today's "People going quiet"
+disappeared from that list immediately after clicking the button, with the "Checked in" entry
+visible in their Notes section.
+
 Next: nothing left from the original MVP scope or the rough-edge backlog — the app is deployed and
 in use. Future work is whatever surfaces from actually using it day to day, same as every fix this
 session.

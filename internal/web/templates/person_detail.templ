@@ -32,6 +32,15 @@ templ PersonHeader(p model.Person) {
 				}
 			</div>
 			<div style="display:flex;gap:8px;">
+				<button
+					class="btn"
+					hx-post={ personCheckInURL(p.ID) }
+					hx-target={ "#" + noteListID(p.ID) }
+					hx-swap="outerHTML"
+					title="Logs a 'Checked in' note, which resets how long it's been since you last logged contact with this person"
+				>
+					Mark as caught up
+				</button>
 				<button class="btn" hx-get={ personEditURL(p.ID) } hx-target={ "#" + personHeaderID(p.ID) } hx-swap="outerHTML">Edit</button>
 				<button
 					class="btn"

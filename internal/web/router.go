@@ -35,6 +35,7 @@ func NewRouter(h *Handlers, staticDir string) http.Handler {
 
 	mux.HandleFunc("POST /people/{id}/notes", h.PersonNoteCreate)
 	mux.HandleFunc("DELETE /people/{id}/notes/{noteID}", h.PersonNoteDelete)
+	mux.HandleFunc("POST /people/{id}/check-in", h.PersonCheckIn)
 
 	mux.HandleFunc("POST /people/{id}/reminders", h.PersonReminderCreate)
 	mux.HandleFunc("DELETE /people/{id}/reminders/{remID}", h.PersonReminderDelete)
