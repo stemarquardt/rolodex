@@ -46,6 +46,7 @@ func personURL(id int64) string {
 func personHeaderID(id int64) string  { return fmt.Sprintf("person-header-%d", id) }
 func personHeaderURL(id int64) string { return fmt.Sprintf("/people/%d/header", id) }
 func personEditURL(id int64) string   { return fmt.Sprintf("/people/%d/edit", id) }
+func personNudgeURL(id int64) string  { return fmt.Sprintf("/people/%d/nudge", id) }
 
 func contactInfoListID(personID int64) string { return fmt.Sprintf("contact-info-list-%d", personID) }
 func contactInfoCreateURL(personID int64) string {
@@ -255,6 +256,13 @@ const settingsOptionsBodyID = "settings-options-body"
 
 func settingsOptionCreateURL() string         { return "/settings/options" }
 func settingsOptionDeleteURL(id int64) string { return fmt.Sprintf("/settings/options/%d", id) }
+
+const settingsRelationshipTypesBodyID = "settings-relationship-types-body"
+
+func settingsRelationshipTypeCreateURL() string { return "/settings/relationship-types" }
+func settingsRelationshipTypeDeleteURL(id int64) string {
+	return fmt.Sprintf("/settings/relationship-types/%d", id)
+}
 
 // containsOptionValue reports whether value matches one of options
 // (case-insensitive — these back free-text-originated columns like

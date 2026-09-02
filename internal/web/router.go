@@ -13,6 +13,7 @@ func NewRouter(h *Handlers, staticDir string) http.Handler {
 	mux.HandleFunc("DELETE /people/{id}", h.PersonDelete)
 	mux.HandleFunc("GET /people/{id}/edit", h.PersonEdit)
 	mux.HandleFunc("GET /people/{id}/header", h.PersonHeaderView)
+	mux.HandleFunc("PUT /people/{id}/nudge", h.PersonNudgeToggle)
 
 	mux.HandleFunc("POST /people/{id}/contact-info", h.ContactInfoCreate)
 	mux.HandleFunc("DELETE /people/{id}/contact-info/{ciID}", h.ContactInfoDelete)
@@ -69,6 +70,8 @@ func NewRouter(h *Handlers, staticDir string) http.Handler {
 	mux.HandleFunc("GET /settings", h.SettingsPage)
 	mux.HandleFunc("POST /settings/options", h.SettingsOptionCreate)
 	mux.HandleFunc("DELETE /settings/options/{id}", h.SettingsOptionDelete)
+	mux.HandleFunc("POST /settings/relationship-types", h.SettingsRelationshipTypeCreate)
+	mux.HandleFunc("DELETE /settings/relationship-types/{id}", h.SettingsRelationshipTypeDelete)
 
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
 

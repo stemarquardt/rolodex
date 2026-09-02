@@ -24,7 +24,9 @@ templ Layout(active, crumb, title, subtitle string) {
 				</aside>
 				<div class="main">
 					<div class="topbar">
-						<input type="search" placeholder="Search... (⌘K)" style="width:220px"/>
+						<form method="get" action="/people">
+							<input type="search" name="q" placeholder="Search... (⌘K)" style="width:220px"/>
+						</form>
 					</div>
 					<div class="crumb">{ crumb }</div>
 					<h1>{ title }</h1>

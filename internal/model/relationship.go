@@ -100,3 +100,28 @@ func (s *Store) DeleteRelationship(ctx context.Context, id int64) error {
 	}
 	return nil
 }
+
+// CreateRelationshipType adds a new relationship type (e.g. "Coworker" /
+// "Coworker", or an asymmetric pair like "Mentor" / "Mentee").
+func (s *Store) CreateRelationshipType(ctx context.Context, name, nameReverse string) (int64, error) {
+	res, err := s.db.ExecContext(ctx, `
+		INSERT INTO relationship_types (name, name_reverse) VALUES (?, ?)
+	`, name, nameReverse)
+	if err != nil {
+		return 0, fmt.Errorf("create relationship type: %w", err)
+	}
+	return res.LastInsertId()
+}
+
+// DeleteRelationshipType removes a relationship type from the selectable
+// list. Unlike option_values, relationships.relationship_type_id is a real
+// foreign key with ON DELETE CASCADE (see schema.sql) — deleting a type
+// here also deletes every Relationship row using it. The web layer must
+// warn about this before calling it (mirroring the "removes everything
+// attached to them" confirm text already used for deleting a Person).
+func (s *Store) DeleteRelationshipType(ctx context.Context, id int64) error {
+	if _, err := s.db.ExecContext(ctx, `DELETE FROM relationship_types WHERE id = ?`, id); err != nil {
+		return fmt.Errorf("delete relationship type: %w", err)
+	}
+	return nil
+}

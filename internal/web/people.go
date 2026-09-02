@@ -176,3 +176,25 @@ func (h *Handlers) PersonDelete(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("HX-Redirect", "/people")
 }
+
+// PersonNudgeToggle lets the "Include in check-in nudges" checkbox on a
+// person's profile write immediately on click, without going through the
+// full Edit form. No response body — the checkbox's own click already
+// shows the new state, this just persists it.
+func (h *Handlers) PersonNudgeToggle(w http.ResponseWriter, r *http.Request) {
+	id, ok := pathID(w, r, "id")
+	if !ok {
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	enabled := r.FormValue("nudge_enabled") == "true"
+	if err := h.store.SetNudgeEnabled(r.Context(), id, enabled); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}

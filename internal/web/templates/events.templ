@@ -131,7 +131,7 @@ templ EventHeaderEdit(e model.Event, kindOptions, statusOptions []model.OptionVa
 				<input type="text" name="timeframe_note" placeholder="Timeframe (optional)" value={ e.TimeframeNote }/>
 			</div>
 			<div class="inline-form">
-				<input type="text" name="notes" placeholder="Notes" value={ e.Notes } style="flex:1;"/>
+				<textarea name="notes" placeholder="Notes">{ e.Notes }</textarea>
 			</div>
 			<div style="display:flex;gap:8px;">
 				<button class="btn btn-primary" type="submit">Save</button>

@@ -214,3 +214,38 @@ func TestUpdateAndDeletePerson(t *testing.T) {
 		t.Fatalf("expected cascade delete to remove pets, found %d", petCount)
 	}
 }
+
+func TestSetNudgeEnabled(t *testing.T) {
+	ctx := context.Background()
+	s := newTestStore(t)
+
+	id, err := s.CreatePerson(ctx, Person{FirstName: "Maya"})
+	if err != nil {
+		t.Fatalf("CreatePerson: %v", err)
+	}
+
+	got, err := s.GetPerson(ctx, id)
+	if err != nil || got == nil || got.NudgeEnabled {
+		t.Fatalf("expected nudge_enabled to default to false, got %+v, err=%v", got, err)
+	}
+
+	if err := s.SetNudgeEnabled(ctx, id, true); err != nil {
+		t.Fatalf("SetNudgeEnabled(true): %v", err)
+	}
+	got, err = s.GetPerson(ctx, id)
+	if err != nil || got == nil || !got.NudgeEnabled {
+		t.Fatalf("expected nudge_enabled=true, got %+v, err=%v", got, err)
+	}
+
+	if err := s.SetNudgeEnabled(ctx, id, false); err != nil {
+		t.Fatalf("SetNudgeEnabled(false): %v", err)
+	}
+	got, err = s.GetPerson(ctx, id)
+	if err != nil || got == nil || got.NudgeEnabled {
+		t.Fatalf("expected nudge_enabled=false, got %+v, err=%v", got, err)
+	}
+
+	if err := s.SetNudgeEnabled(ctx, 99999, true); err != sql.ErrNoRows {
+		t.Fatalf("expected sql.ErrNoRows for missing person, got %v", err)
+	}
+}

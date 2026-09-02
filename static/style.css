@@ -191,6 +191,18 @@ form.inline-form input[type="text"] {
   min-width: 140px;
 }
 
+form.inline-form textarea {
+  flex: 1;
+  min-width: 200px;
+  min-height: 60px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+}
+
 .section-title {
   font-size: 12px;
   text-transform: uppercase;

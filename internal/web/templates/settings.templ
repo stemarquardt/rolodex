@@ -18,9 +18,10 @@ var settingsCategories = []struct {
 	{model.CategoryImportantDateType, "Important date types"},
 }
 
-templ SettingsPage(options map[string][]model.OptionValue) {
+templ SettingsPage(options map[string][]model.OptionValue, relTypes []model.RelationshipType) {
 	@Layout("settings", "Rolodex", "Settings", "Manage the option lists behind the dropdowns elsewhere in the app.") {
 		@SettingsOptionsBody(options)
+		@SettingsRelationshipTypesBody(relTypes)
 	}
 }
 
@@ -61,6 +62,40 @@ templ SettingsCategoryPanel(category, title string, items []model.OptionValue) {
 		>
 			<input type="hidden" name="category" value={ category }/>
 			<input type="text" name="value" placeholder="Add a value..." required/>
+			<button class="btn" type="submit">+ Add</button>
+		</form>
+	</div>
+}
+
+templ SettingsRelationshipTypesBody(relTypes []model.RelationshipType) {
+	<div id={ settingsRelationshipTypesBodyID } class="panel">
+		<div class="section-title">Relationship types</div>
+		if len(relTypes) == 0 {
+			<div class="muted">No relationship types yet.</div>
+		}
+		for _, rt := range relTypes {
+			<div class="list-row">
+				<span style="flex:1;">{ rt.Name } / { rt.NameReverse }</span>
+				<button
+					class="btn"
+					hx-delete={ settingsRelationshipTypeDeleteURL(rt.ID) }
+					hx-target={ "#" + settingsRelationshipTypesBodyID }
+					hx-swap="outerHTML"
+					hx-confirm="Remove this relationship type? This removes every relationship using it, not just the choice — that data doesn't come back."
+				>
+					Remove
+				</button>
+			</div>
+		}
+		<form
+			class="inline-form"
+			hx-post={ settingsRelationshipTypeCreateURL() }
+			hx-target={ "#" + settingsRelationshipTypesBodyID }
+			hx-swap="outerHTML"
+			hx-on::after-request="if(event.detail.successful) this.reset()"
+		>
+			<input type="text" name="name" placeholder="Name (e.g. Coworker)" required/>
+			<input type="text" name="name_reverse" placeholder="Reverse name (e.g. Coworker)" required/>
 			<button class="btn" type="submit">+ Add</button>
 		</form>
 	</div>

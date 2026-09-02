@@ -44,7 +44,14 @@ templ PersonHeader(p model.Person) {
 			</div>
 		</div>
 		<label class="muted" style="display:flex;align-items:center;gap:6px;margin-top:10px;">
-			<input type="checkbox" disabled checked?={ p.NudgeEnabled }/>
+			<input
+				type="checkbox"
+				checked?={ p.NudgeEnabled }
+				hx-put={ personNudgeURL(p.ID) }
+				hx-trigger="change"
+				hx-vals="js:{nudge_enabled: event.target.checked}"
+				hx-swap="none"
+			/>
 			Include in check-in nudges
 		</label>
 	</div>
@@ -445,7 +452,7 @@ templ NotesSection(personID int64, items []model.Note) {
 			hx-swap="outerHTML"
 			hx-on::after-request="if(event.detail.successful) this.reset()"
 		>
-			<input type="text" name="body" placeholder="Add a note..." required/>
+			<textarea name="body" placeholder="Add a note..." required></textarea>
 			<button class="btn" type="submit">+ Add</button>
 		</form>
 		@NotesList(personID, items)

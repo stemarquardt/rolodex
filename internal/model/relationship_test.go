@@ -57,3 +57,69 @@ func TestRelationshipBidirectionalDisplay(t *testing.T) {
 		t.Fatalf("expected relationship gone from both sides after delete: maya=%+v jo=%+v", mayaRels, joRels)
 	}
 }
+
+func TestCreateAndDeleteRelationshipType(t *testing.T) {
+	ctx := context.Background()
+	s := newTestStore(t)
+
+	id, err := s.CreateRelationshipType(ctx, "Coworker", "Coworker")
+	if err != nil {
+		t.Fatalf("CreateRelationshipType: %v", err)
+	}
+
+	types, err := s.ListRelationshipTypes(ctx)
+	if err != nil {
+		t.Fatalf("ListRelationshipTypes: %v", err)
+	}
+	var found bool
+	for _, rt := range types {
+		if rt.ID == id {
+			found = true
+			if rt.Name != "Coworker" || rt.NameReverse != "Coworker" {
+				t.Fatalf("unexpected relationship type: %+v", rt)
+			}
+		}
+	}
+	if !found {
+		t.Fatalf("expected new relationship type in list, got %+v", types)
+	}
+
+	if err := s.DeleteRelationshipType(ctx, id); err != nil {
+		t.Fatalf("DeleteRelationshipType: %v", err)
+	}
+	types, _ = s.ListRelationshipTypes(ctx)
+	for _, rt := range types {
+		if rt.ID == id {
+			t.Fatalf("expected relationship type to be gone after delete, still found: %+v", rt)
+		}
+	}
+}
+
+func TestDeleteRelationshipTypeCascadesToRelationships(t *testing.T) {
+	ctx := context.Background()
+	s := newTestStore(t)
+
+	typeID, err := s.CreateRelationshipType(ctx, "Coworker", "Coworker")
+	if err != nil {
+		t.Fatalf("CreateRelationshipType: %v", err)
+	}
+	mayaID, _ := s.CreatePerson(ctx, Person{FirstName: "Maya"})
+	joID, _ := s.CreatePerson(ctx, Person{FirstName: "Jo"})
+	if _, err := s.CreateRelationship(ctx, mayaID, joID, typeID); err != nil {
+		t.Fatalf("CreateRelationship: %v", err)
+	}
+
+	// Unlike option_values, relationship_type_id is a real foreign key with
+	// ON DELETE CASCADE — deleting the type must also remove the
+	// relationship using it, not just the choice from future pickers.
+	if err := s.DeleteRelationshipType(ctx, typeID); err != nil {
+		t.Fatalf("DeleteRelationshipType: %v", err)
+	}
+	rels, err := s.ListRelationships(ctx, mayaID)
+	if err != nil {
+		t.Fatalf("ListRelationships: %v", err)
+	}
+	if len(rels) != 0 {
+		t.Fatalf("expected relationship to be cascade-deleted with its type, got %+v", rels)
+	}
+}

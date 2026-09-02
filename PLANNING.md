@@ -383,11 +383,31 @@ silently reset by a re-run. Verified manually by simulating the home server's ac
 state (existing people with `nudge_enabled=1`, no migration row) and confirming a restart both
 fixes them and — critically — leaves a subsequently re-enabled person alone on the *next* restart.
 
-Next: nothing left from the original MVP scope — the app is deployed and in use. Future work is
-whatever surfaces from actually using it day to day (this session's Events-status, dropdown, and
-nudge-default fixes all came from exactly that). Noted but not yet acted on: Relationship types
-have no add/remove UI (the one lookup-table-style field Settings doesn't cover), the top-bar search
-box on every page is decorative/non-functional, Circle name still has the same "looks like Chrome
-autofill" datalist UI the Settings work moved everything else away from (kept deliberately — it's
-how a brand-new Circle gets created inline), and Notes/Event-notes are single-line inputs rather
-than a textarea.
+Cleared most of the rough-edge backlog noted above:
+- **Relationship types are now manageable from Settings** — `internal/model/relationship.go` gained
+  `CreateRelationshipType`/`DeleteRelationshipType`, `/settings` gained a 5th panel. One real gotcha
+  caught during implementation: unlike `option_values`, `relationships.relationship_type_id` is a
+  genuine foreign key with `ON DELETE CASCADE` in the schema, so deleting a type also deletes every
+  Relationship using it — the delete button's confirm text says so explicitly, and this is covered
+  by a dedicated test (`TestDeleteRelationshipTypeCascadesToRelationships`) precisely because the
+  first-drafted code comment claimed the opposite (no cascade, matching `option_values`) before the
+  schema was re-checked.
+- **The top-bar search box now works** — wrapped in a plain `GET` form to `/people?q=`, reusing the
+  People page's existing search rather than building anything new. No JS, no ⌘K shortcut (out of
+  scope, would need real JS this project has avoided everywhere else).
+- **Notes (person profile) and Event notes are now `<textarea>`s** instead of single-line inputs —
+  no model/handler changes needed, `r.FormValue` reads a textarea's value the same way.
+- **The nudge checkbox is now live on the profile view** — no more Edit-click-Save round trip for
+  one flag. `Store.SetNudgeEnabled` is a dedicated single-column update (deliberately not routed
+  through `UpdatePerson`, which would overwrite name/nickname/location from a partial payload); the
+  checkbox posts via `hx-put` with `hx-vals="js:{nudge_enabled: event.target.checked}"` to
+  correctly send `false` on uncheck (bare checkboxes don't submit at all when unchecked). No
+  confirmation dialog — a boolean preference toggle doesn't warrant one, `hx-confirm` in this app is
+  reserved for deletes.
+
+Circle name's datalist UI is the one item from that list intentionally left alone — already decided
+as a kept tradeoff (free-text is how a brand-new Circle gets created inline), not a bug.
+
+Next: nothing left from the original MVP scope or the rough-edge backlog — the app is deployed and
+in use. Future work is whatever surfaces from actually using it day to day, same as every fix this
+session.

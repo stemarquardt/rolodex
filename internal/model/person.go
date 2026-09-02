@@ -145,6 +145,29 @@ func (s *Store) UpdatePerson(ctx context.Context, p Person) error {
 	return nil
 }
 
+// SetNudgeEnabled toggles just the check-in-nudge flag, deliberately not
+// going through UpdatePerson (which overwrites every core field from a full
+// Person struct) — this lets the profile page's checkbox write immediately
+// on click without needing the rest of the Edit form's fields.
+func (s *Store) SetNudgeEnabled(ctx context.Context, personID int64, enabled bool) error {
+	nudge := 0
+	if enabled {
+		nudge = 1
+	}
+	res, err := s.db.ExecContext(ctx, `UPDATE people SET nudge_enabled = ? WHERE id = ?`, nudge, personID)
+	if err != nil {
+		return fmt.Errorf("set nudge enabled: %w", err)
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("set nudge enabled rows affected: %w", err)
+	}
+	if n == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}
+
 // DeletePerson removes a person and (via ON DELETE CASCADE) everything
 // attached to them: contact info, important dates, relationships, circle
 // memberships, pets, facts, notes, and reminders/events that reference them.
