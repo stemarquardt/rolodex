@@ -100,7 +100,7 @@ func (s *Store) ListEvents(ctx context.Context) ([]Event, error) {
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT id, kind, status, title, start_date, end_date, timeframe_note, notes, created_at
 		FROM events
-		ORDER BY CASE status
+		ORDER BY CASE LOWER(status)
 		             WHEN 'idea' THEN 0
 		             WHEN 'tentative' THEN 1
 		             WHEN 'confirmed' THEN 2
@@ -166,8 +166,8 @@ func (s *Store) ListEventsNeedingAttention(ctx context.Context, withinDays int) 
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT id, kind, status, title, start_date, end_date, timeframe_note, notes, created_at
 		FROM events
-		WHERE status = 'tentative'
-		   OR (status = 'confirmed' AND start_date IS NOT NULL
+		WHERE LOWER(status) = 'tentative'
+		   OR (LOWER(status) = 'confirmed' AND start_date IS NOT NULL
 		       AND date(start_date) BETWEEN date('now') AND date('now', '+' || ? || ' days'))
 		ORDER BY start_date IS NULL, start_date
 	`, withinDays)

@@ -40,6 +40,7 @@ templ EventGroups(events []model.Event) {
 		@EventGroup("Tentative", filterEventsByStatus(events, "tentative"))
 		@EventGroup("Confirmed & upcoming", filterEventsByStatus(events, "confirmed"))
 		@EventGroup("Past", filterEventsPast(events))
+		@EventGroup("Other", filterEventsOtherStatus(events))
 		if len(events) == 0 {
 			<div class="panel muted">No visits or events yet — add your first one above.</div>
 		}

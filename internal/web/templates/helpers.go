@@ -159,12 +159,14 @@ func eventWhen(e model.Event) string {
 
 const eventGroupsID = "event-groups"
 
-// filterEventsByStatus returns the subset of events with the given status,
-// preserving order (events is already sorted by ListEvents).
+// filterEventsByStatus returns the subset of events with the given status
+// (case-insensitive — status is a free-text field, so "Tentative" and
+// "tentative" should group the same way), preserving order (events is
+// already sorted by ListEvents).
 func filterEventsByStatus(events []model.Event, status string) []model.Event {
 	var out []model.Event
 	for _, e := range events {
-		if e.Status == status {
+		if strings.EqualFold(e.Status, status) {
 			out = append(out, e)
 		}
 	}
@@ -176,7 +178,30 @@ func filterEventsByStatus(events []model.Event, status string) []model.Event {
 func filterEventsPast(events []model.Event) []model.Event {
 	var out []model.Event
 	for _, e := range events {
-		if e.Status == "done" || e.Status == "cancelled" {
+		if strings.EqualFold(e.Status, "done") || strings.EqualFold(e.Status, "cancelled") {
+			out = append(out, e)
+		}
+	}
+	return out
+}
+
+// filterEventsOtherStatus returns events whose status doesn't match any of
+// the known buckets above (idea/tentative/confirmed/done/cancelled,
+// case-insensitive) — a catch-all so a typo'd or unexpected status value
+// still shows up somewhere on the Events page instead of silently
+// disappearing from the list while still being reachable by direct URL.
+func filterEventsOtherStatus(events []model.Event) []model.Event {
+	known := []string{"idea", "tentative", "confirmed", "done", "cancelled"}
+	var out []model.Event
+	for _, e := range events {
+		matched := false
+		for _, k := range known {
+			if strings.EqualFold(e.Status, k) {
+				matched = true
+				break
+			}
+		}
+		if !matched {
 			out = append(out, e)
 		}
 	}

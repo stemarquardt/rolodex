@@ -70,6 +70,30 @@ func TestListEventsNeedingAttention(t *testing.T) {
 	}
 }
 
+func TestListEventsNeedingAttentionCaseInsensitive(t *testing.T) {
+	ctx := context.Background()
+	s := newTestStore(t)
+
+	soon := time.Now().AddDate(0, 0, 5).Format("2006-01-02")
+	tentativeID := mustExec(t, s, `INSERT INTO events (kind, status, title) VALUES ('visit', 'Tentative', 'Maybe visit')`)
+	confirmedID := mustExec(t, s, `INSERT INTO events (kind, status, title, start_date) VALUES ('visit', 'Confirmed', 'Dinner', ?)`, soon)
+
+	events, err := s.ListEventsNeedingAttention(ctx, 14)
+	if err != nil {
+		t.Fatalf("ListEventsNeedingAttention: %v", err)
+	}
+	if len(events) != 2 {
+		t.Fatalf("expected differently-cased Tentative/Confirmed events to still be included, got %+v", events)
+	}
+	byID := map[int64]bool{}
+	for _, e := range events {
+		byID[e.ID] = true
+	}
+	if !byID[tentativeID] || !byID[confirmedID] {
+		t.Fatalf("expected both events by id, got %+v", events)
+	}
+}
+
 func TestListDueReminders(t *testing.T) {
 	ctx := context.Background()
 	s := newTestStore(t)

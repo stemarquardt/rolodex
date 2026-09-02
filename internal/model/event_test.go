@@ -106,6 +106,31 @@ func TestListEventsGroupOrdering(t *testing.T) {
 	}
 }
 
+// TestListEventsGroupOrderingCaseInsensitive guards against a bug where an
+// event saved with a differently-cased status (e.g. "Tentative", typed via
+// the free-text status field) sorted into the catch-all bucket instead of
+// its matching status group — which, combined with the web templates' exact
+// string match, made such events silently vanish from the /events list
+// entirely while still being fully reachable at their direct URL.
+func TestListEventsGroupOrderingCaseInsensitive(t *testing.T) {
+	ctx := context.Background()
+	s := newTestStore(t)
+
+	tentativeID, _ := s.CreateEvent(ctx, Event{Kind: "visit", Status: "Tentative"})
+	ideaID, _ := s.CreateEvent(ctx, Event{Kind: "visit", Status: "idea"})
+
+	events, err := s.ListEvents(ctx)
+	if err != nil || len(events) != 2 {
+		t.Fatalf("ListEvents: %+v, err=%v", events, err)
+	}
+	wantOrder := []int64{ideaID, tentativeID}
+	for i, id := range wantOrder {
+		if events[i].ID != id {
+			t.Fatalf("expected event order %v (idea before Tentative despite casing), got ids %v", wantOrder, eventIDs(events))
+		}
+	}
+}
+
 func eventIDs(events []Event) []int64 {
 	ids := make([]int64, len(events))
 	for i, e := range events {
