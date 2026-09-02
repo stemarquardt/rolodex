@@ -7,7 +7,7 @@ import (
 )
 
 templ PeopleList(people []model.Person, search string) {
-	@Layout("people", "Personal CRM", "People", fmt.Sprintf("%d people, remembered in your own words.", len(people))) {
+	@Layout("people", "Rolodex", "People", fmt.Sprintf("%d people, remembered in your own words.", len(people))) {
 		<form class="inline-form" method="get" action="/people">
 			<input type="text" name="q" placeholder="Search names, circles, or notes" value={ search }/>
 			<button class="btn" type="submit">Search</button>

@@ -68,7 +68,7 @@ func EventsList(events []model.Event) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = Layout("events", "Personal CRM", "Visits & events", "Keep the good intentions somewhere gentle.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Layout("events", "Rolodex", "Visits & events", "Keep the good intentions somewhere gentle.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

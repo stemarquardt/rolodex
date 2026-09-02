@@ -77,7 +77,7 @@ func Today(dates []model.UpcomingImportantDate, events []model.Event, reminders 
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = Layout("today", "Personal CRM", "Today", "Here's what's worth holding in mind today.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Layout("today", "Rolodex", "Today", "Here's what's worth holding in mind today.").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

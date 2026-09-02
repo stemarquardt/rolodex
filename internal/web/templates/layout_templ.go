@@ -42,7 +42,7 @@ func Layout(active, crumb, title, subtitle string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " · Personal CRM</title><link rel=\"stylesheet\" href=\"/static/style.css\"><script src=\"/static/htmx.min.js\"></script></head><body><div class=\"app\"><aside class=\"sidebar\"><div class=\"brand\">Personal CRM</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " · Rolodex</title><link rel=\"stylesheet\" href=\"/static/style.css\"><script src=\"/static/htmx.min.js\"></script></head><body><div class=\"app\"><aside class=\"sidebar\"><div class=\"brand\"><img src=\"/static/rolodex_mini.png\" alt=\"\" class=\"brand-icon\">Rolodex</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -5,7 +5,7 @@ import (
 )
 
 templ RemindersList(reminders []model.Reminder, people []model.Person, events []model.Event) {
-	@Layout("reminders", "Personal CRM", "Reminders", "Nudges you set for yourself, not the people you love.") {
+	@Layout("reminders", "Rolodex", "Reminders", "Nudges you set for yourself, not the people you love.") {
 		<form
 			class="inline-form"
 			hx-post="/reminders"
