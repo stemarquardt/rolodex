@@ -245,6 +245,25 @@ seeded events/reminders/notes exercising all four sections, including a person d
 staleness list after a new Note is added. No CRUD UI for Events/Reminders yet — Today is read-only
 against those tables until those pages are built.
 
-Next: build out Circles and Visits & events pages (Reminders CRUD can likely piggyback on the
-Visits & events pass, or come as its own small page) against the same Store pattern; then deploy to
-the Precision server via `docker compose up -d --build` over Tailscale.
+Circles now has full list/detail pages: a master list (`/circles`) with member counts and an
+inline "+ New circle" form, and a detail page (`/circles/{id}`) with edit-in-place core fields
+(name/description, mirroring Person's header edit pattern) and add/delete-only membership
+management (mirroring every other Person sub-collection). Reuses the `AddPersonToCircle`/
+`RemovePersonFromCircle` plumbing built during the People CRUD pass, so a membership added from
+either the circle's page or the person's page shows up correctly on both. Covered by
+`internal/model/circle_test.go`; verified manually via `docker compose up --build` (create circle,
+add/remove members, edit fields, delete with cascade confirmed on both the circles list and the
+affected person's own profile).
+
+Known minor UX nit, not fixed: after adding/removing a circle member via htmx, the "add member"
+`<select>` isn't live-refiltered (it only excludes existing members on a full page load) — matches
+the same tolerance already present in `RelationshipsSection` on the person profile page, and is
+harmless here since `AddPersonToCircle` is an upsert (re-selecting an already-added person just
+updates their note, no duplicate).
+
+Next: build out Visits & Events (Event CRUD with the idea → tentative → confirmed → done/cancelled
+status flow, `EventPerson` multi-person picker) and Reminders (CRUD + the "compute next due_date on
+completion" logic for recurring reminders) against the same Store pattern — these are what currently
+let Today's "Visits needing attention" and "Reminders" sections only be exercised via raw SQL in
+tests, with no UI to create that data yet. Then deploy to the Precision server via
+`docker compose up -d --build` over Tailscale.

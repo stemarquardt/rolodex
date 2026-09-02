@@ -81,6 +81,19 @@ func circleDeleteURL(personID, circleID int64) string {
 	return fmt.Sprintf("/people/%d/circles/%d", personID, circleID)
 }
 
+func circleURL(id int64) string       { return fmt.Sprintf("/circles/%d", id) }
+func circleHeaderID(id int64) string  { return fmt.Sprintf("circle-header-%d", id) }
+func circleHeaderURL(id int64) string { return fmt.Sprintf("/circles/%d/header", id) }
+func circleEditURL(id int64) string   { return fmt.Sprintf("/circles/%d/edit", id) }
+
+func circleMemberListID(circleID int64) string { return fmt.Sprintf("circle-members-%d", circleID) }
+func circleMemberCreateURL(circleID int64) string {
+	return fmt.Sprintf("/circles/%d/members", circleID)
+}
+func circleMemberDeleteURL(circleID, personID int64) string {
+	return fmt.Sprintf("/circles/%d/members/%d", circleID, personID)
+}
+
 func petListID(personID int64) string    { return fmt.Sprintf("pets-list-%d", personID) }
 func petCreateURL(personID int64) string { return fmt.Sprintf("/people/%d/pets", personID) }
 func petDeleteURL(personID, id int64) string {

@@ -1,0 +1,156 @@
+package templates
+
+import (
+	"fmt"
+
+	"rolodex/internal/model"
+)
+
+templ CircleIndex(circles []model.Circle) {
+	@Layout("circles", "Personal CRM", "Circles", "A softer way to remember who belongs where.") {
+		<form
+			class="inline-form"
+			hx-post="/circles"
+			hx-target="#circles-table"
+			hx-swap="outerHTML"
+			hx-on::after-request="if(event.detail.successful) this.reset()"
+		>
+			<input type="text" name="name" placeholder="Circle name" required/>
+			<input type="text" name="description" placeholder="Description"/>
+			<button class="btn btn-primary" type="submit">+ New circle</button>
+		</form>
+		@CircleIndexTable(circles)
+	}
+}
+
+templ CircleIndexTable(circles []model.Circle) {
+	<div class="panel" id="circles-table">
+		<table>
+			<thead>
+				<tr>
+					<th>Circle</th>
+					<th>Description</th>
+					<th>Members</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, c := range circles {
+					<tr>
+						<td><a href={ templ.URL(circleURL(c.ID)) }>{ c.Name }</a></td>
+						<td class="muted">{ c.Description }</td>
+						<td class="muted">{ fmt.Sprintf("%d", c.MemberCount) }</td>
+					</tr>
+				}
+				if len(circles) == 0 {
+					<tr>
+						<td colspan="3" class="muted">No circles yet — add your first one above.</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+}
+
+templ CircleDetail(detail *model.CircleDetail, otherPeople []model.Person) {
+	@Layout("circles", "Circles / Detail", detail.Name, "") {
+		@CircleHeader(detail.Circle)
+		@CircleMembersSection(detail.ID, detail.Members, otherPeople)
+	}
+}
+
+templ CircleHeader(c model.Circle) {
+	<div class="panel" id={ circleHeaderID(c.ID) }>
+		<div style="display:flex;justify-content:space-between;align-items:flex-start;">
+			<div>
+				<div style="font-size:20px;font-weight:600;">{ c.Name }</div>
+				if c.Description != "" {
+					<div class="muted">{ c.Description }</div>
+				}
+			</div>
+			<div style="display:flex;gap:8px;">
+				<button class="btn" hx-get={ circleEditURL(c.ID) } hx-target={ "#" + circleHeaderID(c.ID) } hx-swap="outerHTML">Edit</button>
+				<button
+					class="btn"
+					hx-delete={ circleURL(c.ID) }
+					hx-confirm="Delete this circle? This removes it from every member's profile."
+					hx-target="body"
+				>
+					Delete circle
+				</button>
+			</div>
+		</div>
+	</div>
+}
+
+templ CircleHeaderEdit(c model.Circle) {
+	<div class="panel" id={ circleHeaderID(c.ID) }>
+		<form hx-put={ circleURL(c.ID) } hx-target={ "#" + circleHeaderID(c.ID) } hx-swap="outerHTML">
+			<div class="inline-form">
+				<input type="text" name="name" placeholder="Circle name" value={ c.Name } required/>
+				<input type="text" name="description" placeholder="Description" value={ c.Description }/>
+			</div>
+			<div style="display:flex;gap:8px;">
+				<button class="btn btn-primary" type="submit">Save</button>
+				<button
+					class="btn"
+					type="button"
+					hx-get={ circleHeaderURL(c.ID) }
+					hx-target={ "#" + circleHeaderID(c.ID) }
+					hx-swap="outerHTML"
+				>
+					Cancel
+				</button>
+			</div>
+		</form>
+	</div>
+}
+
+templ CircleMembersSection(circleID int64, members []model.CircleMember, otherPeople []model.Person) {
+	<div class="panel">
+		<div class="section-title">People in this circle</div>
+		@CircleMembersList(circleID, members)
+		if len(otherPeople) > 0 {
+			<form
+				class="inline-form"
+				hx-post={ circleMemberCreateURL(circleID) }
+				hx-target={ "#" + circleMemberListID(circleID) }
+				hx-swap="outerHTML"
+			>
+				<select name="person_id">
+					for _, p := range otherPeople {
+						<option value={ idStr(p.ID) }>{ p.FullName() }</option>
+					}
+				</select>
+				<input type="text" name="note" placeholder="Context (optional)"/>
+				<button class="btn" type="submit">+ Add</button>
+			</form>
+		}
+	</div>
+}
+
+templ CircleMembersList(circleID int64, members []model.CircleMember) {
+	<div id={ circleMemberListID(circleID) }>
+		if len(members) == 0 {
+			<div class="muted">No members yet.</div>
+		}
+		for _, m := range members {
+			<div class="list-row">
+				<a href={ templ.URL(personURL(m.PersonID)) } style="flex:1;">{ m.PersonName }</a>
+				if m.Note.Valid && m.Note.String != "" {
+					<span class="muted" style="flex:1;">{ m.Note.String }</span>
+				} else {
+					<span style="flex:1;"></span>
+				}
+				<button
+					class="btn"
+					hx-delete={ circleMemberDeleteURL(circleID, m.PersonID) }
+					hx-target={ "#" + circleMemberListID(circleID) }
+					hx-swap="outerHTML"
+					hx-confirm="Remove this person from the circle?"
+				>
+					Remove
+				</button>
+			</div>
+		}
+	</div>
+}

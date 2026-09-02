@@ -35,7 +35,17 @@ func NewRouter(h *Handlers, staticDir string) http.Handler {
 	mux.HandleFunc("POST /people/{id}/notes", h.PersonNoteCreate)
 	mux.HandleFunc("DELETE /people/{id}/notes/{noteID}", h.PersonNoteDelete)
 
-	mux.HandleFunc("GET /circles", h.Circles)
+	mux.HandleFunc("GET /circles", h.CirclesList)
+	mux.HandleFunc("POST /circles", h.CircleCreate)
+	mux.HandleFunc("GET /circles/{id}", h.CircleDetail)
+	mux.HandleFunc("PUT /circles/{id}", h.CircleUpdate)
+	mux.HandleFunc("DELETE /circles/{id}", h.CircleDelete)
+	mux.HandleFunc("GET /circles/{id}/edit", h.CircleEdit)
+	mux.HandleFunc("GET /circles/{id}/header", h.CircleHeaderView)
+
+	mux.HandleFunc("POST /circles/{id}/members", h.CircleMemberCreate)
+	mux.HandleFunc("DELETE /circles/{id}/members/{personID}", h.CircleMemberDelete)
+
 	mux.HandleFunc("GET /events", h.Events)
 	mux.HandleFunc("GET /reminders", h.Reminders)
 	mux.HandleFunc("GET /notes", h.Notes)
