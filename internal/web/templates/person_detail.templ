@@ -142,7 +142,7 @@ templ ImportantDatesSection(personID int64, items []model.ImportantDate, typeOpt
 					<option value={ o.Value }>{ o.Value }</option>
 				}
 			</select>
-			<input type="text" name="label" placeholder="Label" required/>
+			<input type="text" name="label" placeholder="Label (optional — defaults to type)"/>
 			<input type="number" name="month" placeholder="Month" min="1" max="12" required style="width:80px;"/>
 			<input type="number" name="day" placeholder="Day" min="1" max="31" required style="width:70px;"/>
 			<input type="number" name="year" placeholder="Year (optional)" style="width:110px;"/>

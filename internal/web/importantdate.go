@@ -30,9 +30,17 @@ func (h *Handlers) ImportantDateCreate(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "day must be between 1 and 31", http.StatusBadRequest)
 		return
 	}
-	if typ == "" || label == "" {
-		http.Error(w, "type and label are required", http.StatusBadRequest)
+	if typ == "" {
+		http.Error(w, "type is required", http.StatusBadRequest)
 		return
+	}
+	// Label is only really needed to distinguish multiple dates of the same
+	// type (e.g. two "Anniversary" entries) or to say what a "Custom" date
+	// actually is — for the common case (a single Birthday) it's just
+	// redundant with the type, so default to that instead of forcing the
+	// user to retype it.
+	if label == "" {
+		label = typ
 	}
 
 	var year *int

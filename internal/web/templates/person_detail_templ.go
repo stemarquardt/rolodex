@@ -725,7 +725,7 @@ func ImportantDatesSection(personID int64, items []model.ImportantDate, typeOpti
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "</select> <input type=\"text\" name=\"label\" placeholder=\"Label\" required> <input type=\"number\" name=\"month\" placeholder=\"Month\" min=\"1\" max=\"12\" required style=\"width:80px;\"> <input type=\"number\" name=\"day\" placeholder=\"Day\" min=\"1\" max=\"31\" required style=\"width:70px;\"> <input type=\"number\" name=\"year\" placeholder=\"Year (optional)\" style=\"width:110px;\"> <button class=\"btn\" type=\"submit\">+ Add</button></form></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "</select> <input type=\"text\" name=\"label\" placeholder=\"Label (optional — defaults to type)\"> <input type=\"number\" name=\"month\" placeholder=\"Month\" min=\"1\" max=\"12\" required style=\"width:80px;\"> <input type=\"number\" name=\"day\" placeholder=\"Day\" min=\"1\" max=\"31\" required style=\"width:70px;\"> <input type=\"number\" name=\"year\" placeholder=\"Year (optional)\" style=\"width:110px;\"> <button class=\"btn\" type=\"submit\">+ Add</button></form></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
