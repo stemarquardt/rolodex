@@ -3,6 +3,11 @@
 *.db-journal
 .DS_Store
 
+# real personal contacts data — never commit an actual Google Takeout export
+/Contacts/
+/Takeout/
+*.vcf
+
 # defensive — nothing in this repo currently needs these, but cheap insurance
 # against ever accidentally committing local secrets or IDE state
 .env

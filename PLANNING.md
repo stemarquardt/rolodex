@@ -299,7 +299,28 @@ manually end-to-end (dry-run preview, real import, re-run no-op, browsed the imp
 the UI). Must be run with the docker compose server stopped (or before starting it) — SQLite is
 single-writer and `internal/db.Open` caps the pool at 1 connection.
 
+The importer was revised after the user ran it against a real Google Takeout export, which turned
+out to be structured differently than assumed: Takeout produces a `Contacts/` directory with one
+subfolder per Google Contacts Label (plus device-sync sources), not a single flat `.vcf`. Fixes:
+- `internal/importer.ResolveSource` accepts either that directory or a specific `.vcf` file — for a
+  directory, it uses `All Contacts/All Contacts.vcf`, which turned out to be the superset: every
+  labeled/saved card's `CATEGORIES` field lists *all* its label memberships, so the per-label files
+  are redundant. `cmd/import`'s usage was updated to point at the directory.
+- `Import` now defaults to only importing cards with a `CATEGORIES` field at all (i.e. contacts the
+  user actually saved/labeled) — real Takeout exports include hundreds of auto-collected contacts
+  (one-off email senders, company accounts) alongside the ones worth having a profile for, and
+  those don't belong in a curated personal CRM by default. `-all` opts into everyone. New
+  `Summary.CardsSkippedUnlabeled` field reports the split.
+- The system-label filter previously assumed Google marks its own pseudo-labels with a `*` prefix
+  (`* myContacts`) — the real export has no such marker (plain `myContacts`, `starred`). Fixed to an
+  exact-match denylist.
+- Confirmed via reading `go-vcard`'s decoder source that line folding, mixed CRLF/LF, Google's
+  `item1.`-grouped-property convention, and repeated `TYPE=` params are already handled correctly
+  by the library — those were not bugs, just needed verification against real data.
+- `.gitignore` now excludes `/Contacts/`, `/Takeout/`, and `*.vcf` — a real Takeout export sitting
+  in the repo working directory during testing must never be tracked.
+
 Next: deploy to the home server via `docker compose up -d --build` over Tailscale — the only
-remaining item from the original MVP scope. The user's own Google Contacts export hasn't been run
-through `cmd/import` yet in this environment (that's a local, personal-data operation for them to
-do on their machine) — worth checking in on before/around deploy.
+remaining item from the original MVP scope. The user is now re-running `cmd/import` against their
+real export with the fixes above; once that looks right, the resulting `data/people.db` is what
+gets copied to the home server as the initial seed.
