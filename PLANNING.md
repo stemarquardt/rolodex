@@ -281,7 +281,9 @@ one-off and a recurring person-linked reminder, confirmed both display correctly
 the person's own profile, completed both and confirmed the one-off/recurring behavior split exactly
 as designed; deleted an event with participants and confirmed cascade cleanup.
 
-Next: deploy to the Precision server via `docker compose up -d --build` over Tailscale — this is now
-the only remaining item from the original MVP scope. (Notes has its own nav entry but is still a
-stub; per the data model, Notes are logged inline on a person's profile, not through a separate
-page, so that stub may just get removed rather than built out — worth revisiting before deploy.)
+The `/notes` nav stub has been removed (along with `templates.ComingSoon` and `internal/web/stub.go`,
+now unused) — Notes are logged inline per-person via `NotesSection` on the profile page, so a
+separate Notes page was redundant scope, not a deferred feature.
+
+Next: deploy to the Precision server via `docker compose up -d --build` over Tailscale — the only
+remaining item from the original MVP scope.

@@ -66,8 +66,6 @@ func NewRouter(h *Handlers, staticDir string) http.Handler {
 	mux.HandleFunc("DELETE /reminders/{id}", h.ReminderDelete)
 	mux.HandleFunc("POST /reminders/{id}/complete", h.ReminderComplete)
 
-	mux.HandleFunc("GET /notes", h.Notes)
-
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
 
 	return mux
