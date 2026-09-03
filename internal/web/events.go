@@ -121,7 +121,13 @@ func (h *Handlers) EventDetail(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	templates.EventDetail(event, otherPeople).Render(r.Context(), w)
+	notes, err := h.store.ListEventNotes(r.Context(), id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	templates.EventDetail(event, otherPeople, notes).Render(r.Context(), w)
 }
 
 func (h *Handlers) EventHeaderView(w http.ResponseWriter, r *http.Request) {

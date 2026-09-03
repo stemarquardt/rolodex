@@ -67,10 +67,11 @@ templ EventGroup(title string, events []model.Event) {
 	}
 }
 
-templ EventDetail(event *model.Event, otherPeople []model.Person) {
+templ EventDetail(event *model.Event, otherPeople []model.Person, notes []model.EventNote) {
 	@Layout("events", "Visits & events / Detail", eventLabel(*event), "") {
 		@EventHeader(*event)
 		@EventParticipantsSection(event.ID, event.People, otherPeople)
+		@EventNotesSection(event.ID, notes)
 	}
 }
 
@@ -185,6 +186,46 @@ templ EventParticipantsList(eventID int64, people []model.Person) {
 					hx-target={ "#" + eventParticipantListID(eventID) }
 					hx-swap="outerHTML"
 					hx-confirm="Remove this person from the event?"
+				>
+					Remove
+				</button>
+			</div>
+		}
+	</div>
+}
+
+templ EventNotesSection(eventID int64, items []model.EventNote) {
+	<div class="panel">
+		<div class="section-title">Notes</div>
+		<form
+			class="inline-form"
+			hx-post={ eventNoteCreateURL(eventID) }
+			hx-target={ "#" + eventNoteListID(eventID) }
+			hx-swap="outerHTML"
+			hx-on::after-request="if(event.detail.successful) this.reset()"
+		>
+			<textarea name="body" placeholder="Add a note..." required></textarea>
+			<button class="btn" type="submit">+ Add</button>
+		</form>
+		@EventNotesList(eventID, items)
+	</div>
+}
+
+templ EventNotesList(eventID int64, items []model.EventNote) {
+	<div id={ eventNoteListID(eventID) }>
+		if len(items) == 0 {
+			<div class="muted">No notes logged yet.</div>
+		}
+		for _, n := range items {
+			<div class="list-row">
+				<span class="muted" style="width:160px;">{ n.CreatedAt }</span>
+				<span style="flex:1;">{ n.Body }</span>
+				<button
+					class="btn"
+					hx-delete={ eventNoteDeleteURL(eventID, n.ID) }
+					hx-target={ "#" + eventNoteListID(eventID) }
+					hx-swap="outerHTML"
+					hx-confirm="Remove this note?"
 				>
 					Remove
 				</button>

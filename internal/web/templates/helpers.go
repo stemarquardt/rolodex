@@ -114,6 +114,12 @@ func noteDeleteURL(personID, id int64) string {
 }
 func personCheckInURL(personID int64) string { return fmt.Sprintf("/people/%d/check-in", personID) }
 
+func eventNoteListID(eventID int64) string    { return fmt.Sprintf("event-notes-list-%d", eventID) }
+func eventNoteCreateURL(eventID int64) string { return fmt.Sprintf("/events/%d/notes", eventID) }
+func eventNoteDeleteURL(eventID, id int64) string {
+	return fmt.Sprintf("/events/%d/notes/%d", eventID, id)
+}
+
 func idStr(id int64) string { return fmt.Sprintf("%d", id) }
 
 func relativeDays(daysUntil int) string {

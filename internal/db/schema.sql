@@ -96,6 +96,19 @@ CREATE TABLE IF NOT EXISTS notes (
 );
 CREATE INDEX IF NOT EXISTS idx_notes_person ON notes(person_id);
 
+-- Deliberately a separate table from notes rather than a generalized
+-- person_id/event_id-nullable notes table (contrast with reminders, which
+-- supports both from day one) — notes.person_id is NOT NULL and has real
+-- production data, so relaxing that would need a full SQLite table-rebuild
+-- migration for what started as a "keep it simple" ask. See PLANNING.md.
+CREATE TABLE IF NOT EXISTS event_notes (
+    id INTEGER PRIMARY KEY,
+    event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    body TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_event_notes_event ON event_notes(event_id);
+
 CREATE TABLE IF NOT EXISTS pets (
     id INTEGER PRIMARY KEY,
     person_id INTEGER NOT NULL REFERENCES people(id) ON DELETE CASCADE,

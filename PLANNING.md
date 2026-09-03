@@ -438,6 +438,16 @@ Important Dates row — showing at most 3 circle tags plus a muted "+N more" ove
 profile page (`CirclesList`) deliberately still shows every membership in full with remove buttons
 — that's the actual management view, truncating there would hide real information.
 
+Events on Today's "Visits needing attention" are now clickable (were a plain `<span>`, not a link —
+every other Today list already linked out). Event detail pages also gained a timestamped freeform
+Notes section, mirroring the Person profile's `NotesSection` exactly — found while the user was
+actually using a real event they'd created. Backed by a new **separate** `event_notes` table rather
+than generalizing `notes` (which has real production data and a `NOT NULL person_id` that SQLite
+can't relax without a full table-rebuild migration) — deliberately the simpler, zero-migration-risk
+option for a "let's just start with the freeform text box" ask; a genuinely unified notes concept
+across People/Events is a bigger, separate decision if it's ever wanted. Cascade-delete verified:
+deleting an event removes its notes with it.
+
 Next: nothing left from the original MVP scope or the rough-edge backlog — the app is deployed and
 in use. Future work is whatever surfaces from actually using it day to day, same as every fix this
 session.
