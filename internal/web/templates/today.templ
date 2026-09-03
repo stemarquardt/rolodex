@@ -24,8 +24,11 @@ templ ImportantDatesToday(dates []model.UpcomingImportantDate) {
 		for _, d := range dates {
 			<div class="list-row">
 				<span class="tag">{ d.Label }</span>
-				for _, c := range d.Circles {
+				for _, c := range limitedCircles(d.Circles, 3) {
 					<span class="tag">{ c }</span>
+				}
+				if n := circleOverflow(d.Circles, 3); n > 0 {
+					<span class="tag muted">{ fmt.Sprintf("+%d more", n) }</span>
 				}
 				<a href={ templ.URL(personURL(d.PersonID)) } style="flex:1;">{ d.PersonName }</a>
 				<span class="muted">{ formatImportantDate(d.ImportantDate) }</span>

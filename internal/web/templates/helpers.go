@@ -135,6 +135,26 @@ func eventPeopleNames(people []model.Person) string {
 	return strings.Join(names, ", ")
 }
 
+// limitedCircles and circleOverflow cap how many circle tags a dense,
+// space-constrained display (the People list, Today's Important Dates row)
+// shows inline before collapsing the rest into a "+N more" tag — someone in
+// several circles shouldn't crowd out the rest of the row. The person's own
+// profile page shows every membership in full (that's where you actually
+// manage them), so this cap is deliberately not applied there.
+func limitedCircles(circles []string, max int) []string {
+	if len(circles) <= max {
+		return circles
+	}
+	return circles[:max]
+}
+
+func circleOverflow(circles []string, max int) int {
+	if len(circles) <= max {
+		return 0
+	}
+	return len(circles) - max
+}
+
 // eventLabel picks the best available display name for an event: its title
 // if set, otherwise the participants' names, otherwise just its kind.
 func eventLabel(e model.Event) string {

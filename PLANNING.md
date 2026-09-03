@@ -421,6 +421,23 @@ happened. Verified manually: a nudge-enabled person showing in Today's "People g
 disappeared from that list immediately after clicking the button, with the "Checked in" entry
 visible in their Notes section.
 
+Today's Important dates row now also shows each person's circles as tags next to the date-type tag
+(e.g. "Birthday · Family · Rock Climbing Friends"), for context. `UpcomingImportantDate` gained a
+`Circles []string` field, populated the same way `Event.People` already is on
+`ListEventsNeedingAttention` — a per-item follow-up call to the existing `ListCircleMemberships`,
+no new SQL.
+
+Confirmed multi-circle membership per person was already fully supported (`person_circles` has no
+uniqueness constraint, the add-circle form never hides based on existing membership count) — this
+is the intended design, not an oversight: Circles are explicitly loose/overlapping per
+`PLANNING.md`'s scope note, distinct from the precise pairwise Relationship mechanism, and mirrors
+how Google Contacts Labels already work (leaned on directly by the importer). Added visual capping
+for the two dense, space-constrained displays — the People list's Circles column and Today's
+Important Dates row — showing at most 3 circle tags plus a muted "+N more" overflow tag
+(`limitedCircles`/`circleOverflow` in `internal/web/templates/helpers.go`). The person's own
+profile page (`CirclesList`) deliberately still shows every membership in full with remove buttons
+— that's the actual management view, truncating there would hide real information.
+
 Next: nothing left from the original MVP scope or the rough-edge backlog — the app is deployed and
 in use. Future work is whatever surfaces from actually using it day to day, same as every fix this
 session.

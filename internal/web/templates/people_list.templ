@@ -49,8 +49,11 @@ templ PeopleTable(people []model.Person) {
 							</div>
 						</td>
 						<td>
-							for _, c := range p.Circles {
+							for _, c := range limitedCircles(p.Circles, 3) {
 								<span class="tag">{ c }</span>
+							}
+							if n := circleOverflow(p.Circles, 3); n > 0 {
+								<span class="tag muted">{ fmt.Sprintf("+%d more", n) }</span>
 							}
 						</td>
 						<td class="muted">
