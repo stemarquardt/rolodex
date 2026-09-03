@@ -47,7 +47,7 @@ templ EventsNeedingAttention(events []model.Event) {
 		for _, e := range events {
 			<div class="list-row">
 				<span class="tag">{ e.Status }</span>
-				<span style="flex:1;">{ eventLabel(e) }</span>
+				<a href={ templ.URL(eventURL(e.ID)) } style="flex:1;">{ eventLabel(e) }</a>
 				<span class="muted">{ eventWhen(e) }</span>
 			</div>
 		}
